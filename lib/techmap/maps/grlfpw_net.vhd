@@ -1,4 +1,22 @@
---GAISLER_LICENSE
+------------------------------------------------------------------------------
+--  This file is a part of the GRLIB VHDL IP LIBRARY
+--  Copyright (C) 2003 - 2008, Gaisler Research
+--  Copyright (C) 2008 - 2014, Aeroflex Gaisler
+--  Copyright (C) 2015 - 2017, Cobham Gaisler
+--
+--  This program is free software; you can redistribute it and/or modify
+--  it under the terms of the GNU General Public License as published by
+--  the Free Software Foundation; either version 2 of the License, or
+--  (at your option) any later version.
+--
+--  This program is distributed in the hope that it will be useful,
+--  but WITHOUT ANY WARRANTY; without even the implied warranty of
+--  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+--  GNU General Public License for more details.
+--
+--  You should have received a copy of the GNU General Public License
+--  along with this program; if not, write to the Free Software
+--  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
 -----------------------------------------------------------------------------
 -- Entity: 	grlfpw
 -- File:	grlfpw.vhd
@@ -808,7 +826,7 @@ end component;
 
 begin
 
- alt : if (tech = altera) generate  -- Cyclone, Stratix V, Cyclone V
+ alt : if (tech = altera) generate  -- Cyclone, Cyclone V
     grlfpw0 : grlfpw_0_altera
       port map (rst, clk, holdn, cpi_flush, cpi_exack, cpi_a_rs1, cpi_d_pc,
     	cpi_d_inst, cpi_d_cnt, cpi_d_trap, cpi_d_annul, cpi_d_pv, cpi_a_pc,
@@ -840,7 +858,7 @@ begin
     	rfo1_data2, rfo2_data1, rfo2_data2 );
   end generate;
     
-  strtxiii : if (tech = stratix3) or (tech = stratix4) generate
+  strtxiii : if (tech = stratix3) or (tech = stratix4) or (tech = stratix5) generate
     grlfpw40 : grlfpw_0_stratixiii
       port map (rst, clk, holdn, cpi_flush, cpi_exack, cpi_a_rs1, cpi_d_pc,
     	cpi_d_inst, cpi_d_cnt, cpi_d_trap, cpi_d_annul, cpi_d_pv, cpi_a_pc,
