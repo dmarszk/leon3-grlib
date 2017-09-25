@@ -221,7 +221,7 @@ entity leon3mp is
       HSMC1_RX4_N       : out std_logic := '0';
       HSMC1_RX5_N       : out std_logic := '0';
       HSMC1_RX6_N       : out std_logic := '0';
-      HSMC1_RX7_N       : out std_logic := '0';
+      HSMC1_RX7_N       : in std_logic;
       HSMC1_RX8_N       : out std_logic := '0';
       HSMC1_RX9_N       : out std_logic := '0';
       HSMC1_RX10_N      : out std_logic := '0';
@@ -262,7 +262,6 @@ entity leon3mp is
       FPGA_DDR_CS_N     : out   std_logic_vector(0 downto 0)  := (others => 'X');
       RZQ_2             : in    std_logic                     := 'X';
       CLK2DDR           : in    std_logic                     := 'X'
-
     );
 end;
 
@@ -451,8 +450,8 @@ architecture rtl of leon3mp is
       hps_io_hps_io_gpio_inst_GPIO00   : inout std_logic                     := 'X';             -- hps_io_gpio_inst_GPIO00
       hps_io_hps_io_gpio_inst_GPIO09   : inout std_logic                     := 'X';             -- hps_io_gpio_inst_GPIO09
       hps_io_hps_io_gpio_inst_GPIO28   : inout std_logic                     := 'X';             -- hps_io_gpio_inst_GPIO28
-      hps_io_hps_io_gpio_inst_GPIO40   : inout std_logic                     := 'X';             -- hps_io_gpio_inst_GPIO40
-      hps_io_hps_io_gpio_inst_GPIO41   : inout std_logic                     := 'X';             -- hps_io_gpio_inst_GPIO41
+      hps_io_hps_io_gpio_inst_LOANIO40 : inout std_logic                     := 'X';             -- hps_io_gpio_inst_LOANIO40
+      hps_io_hps_io_gpio_inst_LOANIO41 : inout std_logic                     := 'X';             -- hps_io_gpio_inst_LOANIO41
       hps_io_hps_io_gpio_inst_LOANIO37 : inout std_logic                     := 'X';             -- hps_io_gpio_inst_LOANIO37
       hps_io_hps_io_gpio_inst_LOANIO48 : inout std_logic                     := 'X';             -- hps_io_gpio_inst_LOANIO48
       hps_io_hps_io_gpio_inst_LOANIO49 : inout std_logic                     := 'X';             -- hps_io_gpio_inst_LOANIO49
@@ -554,7 +553,8 @@ architecture rtl of leon3mp is
 
   -- Used for blinking indicator and controlling loaned HPS signals
   signal indicator_counter : std_logic_vector(31 downto 0) := (others => '0');
-  signal led1_fpga, led2_fpga, led3_fpga, sw1_fpga : std_logic;
+  signal led_fpga : std_logic_vector(3 downto 1);
+  signal sw_fpga : std_logic_vector(3 downto 1);
   signal loaner_out, loaner_oe, loaner_in : std_logic_vector(66 downto 0);
 begin
 
@@ -565,16 +565,20 @@ begin
       indicator_counter <= indicator_counter + 1;
     end if ;
   end process ;
+  
+  HSMC1_RX6_N <= duo.txd;
+  dui.rxd <= HSMC1_RX7_N;
 
-  sw1_fpga <= loaner_in(37);
-  led1_fpga <= indicator_counter(28);
-  led2_fpga <= indicator_counter(28) and sw1_fpga;
-  led3_fpga <= sw1_fpga;
-  HSMC1_TX15 <= indicator_counter(27);
-  HSMC1_TX14 <= indicator_counter(27) and HSMC1_TX14_N;
-  loaner_oe <= (48|49|50 => '1', 37 => '0', others => 'X');
-  --loaner_oe <= (others => '1');
-  loaner_out <= (48 => led3_fpga, 49 => led2_fpga, 50 => led1_fpga, others => 'X');
+  sw_fpga(1) <= loaner_in(37);
+  sw_fpga(2) <= loaner_in(40);
+  sw_fpga(3) <= loaner_in(41);
+  --led_fpga(1) <= indicator_counter(25);
+  --led_fpga(2) <= indicator_counter(25) and sw1_fpga;
+  --led_fpga(3) <= sw1_fpga;
+  HSMC1_TX15 <= indicator_counter(25);
+  HSMC1_TX14 <= indicator_counter(25) and HSMC1_TX14_N;
+  loaner_oe <= (48|49|50 => '1', 37|40|41 => '0', others => 'X');
+  loaner_out <= (48 => led_fpga(3), 49 => led_fpga(2), 50 => led_fpga(1), others => 'X');
 
 
   vcc <= '1';
@@ -583,25 +587,23 @@ begin
   -----------------------------------------------------------------------------
   -- Clocking and reset
   -----------------------------------------------------------------------------
-  -- TODO: map to HPS LED
-  -- LED(1) <= not clklock;
+  led_fpga(1) <= not clklock;
   
   rstgen0: if CFG_HPS_RESET = 1 generate
-    sys_rst_n <= hpsrst;
+    sys_rst_n <= sw_fpga(2) and hpsrst;
   end generate;
   nohps: if CFG_HPS_RESET /= 1 generate
-    -- TODO: this will fail, CFG_HPS_RESET has to be set as 1, remove the option or use HW SW instead?
-    -- sys_rst_n <= RESET_n;
+    sys_rst_n <= sw_fpga(2);
   end generate;
 
   cgi.pllctrl <= "00"; cgi.pllrst <= rstraw;
 
   clklock <= cgo.clklock;
   clkgen0 : clkgen                      -- clock generator using toplevel generic 'freq'
-    generic map (tech    => altera, clk_mul => 7,
-                 clk_div => 5, sdramen => 0,
+    generic map (tech    => altera, clk_mul => CFG_CLKMUL,
+                 clk_div => CFG_CLKDIV, sdramen => 0,
                  noclkfb => 0,
-                 freq => 50000 -- input clock freq
+                 freq => 100000 -- input clock freq
                  )
     port map (clkin => CLK2DDR,
               pciclkin => gnd, clk => clkm, clkn => open,
@@ -637,16 +639,14 @@ begin
   -----------------------------------------------------------------------------
 
   errorn_pad : outpad generic map (tech => padtech) port map (
-    --LED(3), -- TODO: map to HPS LED
-    open,
-    dbgo(0).error
+    led_fpga(3),
+    not(dbgo(0).error)
   );
   dsubre_pad : inpad generic map (tech  => padtech) port map (
-    --KEY(3), -- TODO: map to HPS SW
-    '0',
+    not(sw_fpga(3)),
     dsui.break
   );
-  --LED(2) <= not dsuo.active; -- TODO: map to HPS LED
+  led_fpga(2) <= not dsuo.active;
   dsui.enable <= '1';
 
   l3 : if CFG_LEON3 = 1 generate
@@ -958,12 +958,12 @@ dev_hps_inst : component dev_hps
       hps_io_hps_io_gpio_inst_GPIO00    => USB1_ULPI_CS, --       .hps_io_gpio_inst_GPIO00
       hps_io_hps_io_gpio_inst_GPIO09    => USB1_ULPI_RESET_N, --       .hps_io_gpio_inst_GPIO09
       hps_io_hps_io_gpio_inst_GPIO28    => RGMII1_RESETn, -- hps_io_gpio_inst_GPIO28
-      hps_io_hps_io_gpio_inst_GPIO40    => SW2, -- hps_io_gpio_inst_GPIO40
-      hps_io_hps_io_gpio_inst_GPIO41    => SW3, -- hps_io_gpio_inst_GPIO41
-      hps_io_hps_io_gpio_inst_LOANIO37    => SW1, -- hps_io_gpio_inst_GPIO37
-      hps_io_hps_io_gpio_inst_LOANIO48    => LED3, --       .hps_io_gpio_inst_GPIO48
-      hps_io_hps_io_gpio_inst_LOANIO49    => LED2, -- hps_io_gpio_inst_GPIO49
-      hps_io_hps_io_gpio_inst_LOANIO50    => LED1, -- hps_io_gpio_inst_GPIO50
+      hps_io_hps_io_gpio_inst_LOANIO40    => SW2, -- hps_io_gpio_inst_LOANIO40
+      hps_io_hps_io_gpio_inst_LOANIO41    => SW3, -- hps_io_gpio_inst_LOANIO41
+      hps_io_hps_io_gpio_inst_LOANIO37    => SW1, -- hps_io_gpio_inst_LOANIO37
+      hps_io_hps_io_gpio_inst_LOANIO48    => LED3, -- hps_io_gpio_inst_LOANIO48
+      hps_io_hps_io_gpio_inst_LOANIO49    => LED2, -- hps_io_gpio_inst_LOANIO49
+      hps_io_hps_io_gpio_inst_LOANIO50    => LED1, -- hps_io_gpio_inst_LOANIO50
       hps_loan_io_in                   => loaner_in,                   --          hps_loan_io.in
       hps_loan_io_out                  => loaner_out,                  --                     .out
       hps_loan_io_oe                   => loaner_oe,                   --                     .oe
