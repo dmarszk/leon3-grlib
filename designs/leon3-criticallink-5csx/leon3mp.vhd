@@ -546,7 +546,7 @@ architecture rtl of leon3mp is
   constant BOARD_FREQ : integer := 100000;        -- Board frequency in KHz
   constant CPU_FREQ : integer := BOARD_FREQ * CFG_CLKMUL / CFG_CLKDIV;  -- cpu frequency in KHz
 
-  signal hpsrst : std_logic;
+  signal hps_reset_n : std_logic;
   signal sys_rst_n : std_logic;
   
   signal hps_clock_50mhz : std_logic;
@@ -590,7 +590,7 @@ begin
   led_fpga(1) <= not clklock;
   
   rstgen0: if CFG_HPS_RESET = 1 generate
-    sys_rst_n <= sw_fpga(2) and hpsrst;
+    sys_rst_n <= sw_fpga(2) and hps_reset_n;
   end generate;
   nohps: if CFG_HPS_RESET /= 1 generate
     sys_rst_n <= sw_fpga(2);
@@ -637,16 +637,11 @@ begin
   -----------------------------------------------------------------------------
   -- LEON3 Processor(s), DSU
   -----------------------------------------------------------------------------
-
-  errorn_pad : outpad generic map (tech => padtech) port map (
-    led_fpga(3),
-    not(dbgo(0).error)
-  );
-  dsubre_pad : inpad generic map (tech  => padtech) port map (
-    not(sw_fpga(3)),
-    dsui.break
-  );
-  led_fpga(2) <= not dsuo.active;
+  
+  -- DEV board LEDs and SWs are active low
+  led_fpga(3) <= dbgo(0).error; -- dbgo.error is also active low (see page 1109 of GRIP manual)
+  dsui.break <= not(sw_fpga(3));
+  led_fpga(2) <= not(dsuo.active); 
   dsui.enable <= '1';
 
   l3 : if CFG_LEON3 = 1 generate
@@ -664,7 +659,7 @@ begin
 
     dsugen : if CFG_DSU = 1 generate
       dsu0 : dsu3                         -- LEON3 Debug Support Unit
-        generic map (hindex => hsi_dsu, haddr => 16#D00#, hmask => 16#F00#,
+        generic map (hindex => hsi_dsu, haddr => 16#900#, hmask => 16#F00#,
                    ncpu   => CFG_NCPU, tbits => 30, tech => memtech, irq => 0, kbytes => CFG_ATBSZ)
         port map (rstn, clkm, ahbmi, ahbsi, ahbso(hsi_dsu), dbgo, dbgi, dsui, dsuo);
     end generate;
@@ -777,7 +772,7 @@ begin
   fpga2hps: if CFG_FPGA2HPS = 1 generate
   ahb2axi0 : entity work.ahb2axi
     generic map(
-     hindex => hsi_ahb2axi, haddr => 16#CF0#, hmask => 16#FF0#,
+     hindex => hsi_ahb2axi, haddr => 16#C00#, hmask => 16#F00#,
      idsize => idsize, lensize => lensize, addrsize => periph_addrsize)
     port map(
       rstn                                    => rstn,
@@ -971,7 +966,7 @@ dev_hps_inst : component dev_hps
       bus_clock_clk                    => clkm,                    --            bus_clock.clk
       bus_reset_reset_n                => rstn,                    --            bus_reset.reset_n
       hps_h2f_100mhz_clock_clk         => open,         -- hps_h2f_100mhz_clock.clk
-      hps_h2f_reset_reset_n            => hpsrst,       -- hps_h2f_reset.reset_n
+      hps_h2f_reset_reset_n            => hps_reset_n,       -- hps_h2f_reset.reset_n
       hps_h2f_axi_master_awid          => h2f.awid(11 downto 0),--hps_h2f_axi_master.awid
       hps_h2f_axi_master_awaddr        => h2f.awaddr(29 downto 0),--.awaddr
       hps_h2f_axi_master_awlen         => h2f.awlen,-- .awlen

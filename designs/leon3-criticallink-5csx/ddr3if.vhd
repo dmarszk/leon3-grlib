@@ -31,7 +31,7 @@ entity ddr3if is
     hindex: integer;
     haddr: integer := 16#400#;
     hmask: integer := 16#000#;
-    burstlen: integer := 8
+    burstlen: integer := 4
     );
   port (
     pll_ref_clk: in std_ulogic;

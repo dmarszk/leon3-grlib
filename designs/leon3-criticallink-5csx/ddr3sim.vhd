@@ -27,7 +27,7 @@ library grlib;
 use grlib.stdlib.all;
 use grlib.stdio.all;
 
-entity ddr3controller_0002 is
+entity ddr3ctrl1 is
   port (
     pll_ref_clk               : in    std_logic                      := 'X';             -- clk
     global_reset_n            : in    std_logic                      := 'X';             -- reset_n
@@ -42,25 +42,25 @@ entity ddr3controller_0002 is
     mem_ck_n                  : out   std_logic_vector(0 downto 0);                      -- mem_ck_n
     mem_cke                   : out   std_logic_vector(0 downto 0);                      -- mem_cke
     mem_cs_n                  : out   std_logic_vector(0 downto 0);                      -- mem_cs_n
-    mem_dm                    : out   std_logic_vector(3 downto 0);                      -- mem_dm
+    mem_dm                    : out   std_logic_vector(0 downto 0);                      -- mem_dm
     mem_ras_n                 : out   std_logic_vector(0 downto 0);                      -- mem_ras_n
     mem_cas_n                 : out   std_logic_vector(0 downto 0);                      -- mem_cas_n
     mem_we_n                  : out   std_logic_vector(0 downto 0);                      -- mem_we_n
     mem_reset_n               : out   std_logic;                                         -- mem_reset_n
-    mem_dq                    : inout std_logic_vector(31 downto 0)  := (others => 'X'); -- mem_dq
-    mem_dqs                   : inout std_logic_vector(3 downto 0)   := (others => 'X'); -- mem_dqs
-    mem_dqs_n                 : inout std_logic_vector(3 downto 0)   := (others => 'X'); -- mem_dqs_n
+    mem_dq                    : inout std_logic_vector(7 downto 0)  := (others => 'X'); -- mem_dq
+    mem_dqs                   : inout std_logic_vector(0 downto 0)   := (others => 'X'); -- mem_dqs
+    mem_dqs_n                 : inout std_logic_vector(0 downto 0)   := (others => 'X'); -- mem_dqs_n
     mem_odt                   : out   std_logic_vector(0 downto 0);                      -- mem_odt
     avl_ready                 : out   std_logic;                                         -- waitrequest_n
     avl_burstbegin            : in    std_logic                      := 'X';             -- beginbursttransfer
     avl_addr                  : in    std_logic_vector(25 downto 0)  := (others => 'X'); -- address
     avl_rdata_valid           : out   std_logic;                                         -- readdatavalid
-    avl_rdata                 : out   std_logic_vector(127 downto 0);                    -- readdata
-    avl_wdata                 : in    std_logic_vector(127 downto 0) := (others => 'X'); -- writedata
-    avl_be                    : in    std_logic_vector(15 downto 0)  := (others => 'X'); -- byteenable
+    avl_rdata                 : out   std_logic_vector(31 downto 0);                    -- readdata
+    avl_wdata                 : in    std_logic_vector(31 downto 0) := (others => 'X'); -- writedata
+    avl_be                    : in    std_logic_vector(3 downto 0)  := (others => 'X'); -- byteenable
     avl_read_req              : in    std_logic                      := 'X';             -- read
     avl_write_req             : in    std_logic                      := 'X';             -- write
-    avl_size                  : in    std_logic_vector(3 downto 0)   := (others => 'X'); -- burstcount
+    avl_size                  : in    std_logic_vector(2 downto 0)   := (others => 'X'); -- burstcount
     local_init_done           : out   std_logic;                                         -- local_init_done
     local_cal_success         : out   std_logic;                                         -- local_cal_success
     local_cal_fail            : out   std_logic;                                         -- local_cal_fail
@@ -78,9 +78,9 @@ entity ddr3controller_0002 is
     afi_phy_clk               : out   std_logic;                                         -- afi_phy_clk
     pll_avl_phy_clk           : out   std_logic                                          -- pll_avl_phy_clk
   );
-end ddr3controller_0002;
+end ddr3ctrl1;
 
-architecture sim of ddr3controller_0002 is
+architecture sim of ddr3ctrl1 is
 
   signal lafi_clk, lafi_rst_n: std_ulogic;
   signal lafi_half_clk: std_ulogic;
@@ -105,13 +105,14 @@ begin
   mem_dqs <= (others => 'Z');
   mem_dqs_n <= (others => 'Z');
   mem_odt <= (others => '0');
+  mem_reset_n <= '0';
 
   avl_ready <= '1';
   local_init_done <= '1';
   local_cal_success <= '1';
   local_cal_fail <= '0';
 
-  -- 200 MHz clock
+  -- 150 MHz clock
   clkproc: process
   begin
     lafi_clk <= '0';
@@ -195,7 +196,7 @@ begin
       end loop;
     end load_srec;
 
-    constant avldbits: integer := 128;
+    constant avldbits: integer := 32;
     variable outqueue: std_logic_vector(0 to 4*avldbits-1) := (others => 'X');
     variable outqueue_valid: std_logic_vector(0 to 3) := (others => '0');
     variable ai,p: integer;

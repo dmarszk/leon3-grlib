@@ -35,13 +35,13 @@ package config is
   constant CFG_NOTAG : integer := 0;
   constant CFG_NWP : integer := (4);
   constant CFG_PWD : integer := 1*2;
-  constant CFG_FPU : integer := (1+0 + 3) + 16*0 + 32*0;
+  constant CFG_FPU : integer := 0 + 16*0 + 32*0;
   constant CFG_GRFPUSH : integer := 0;
   constant CFG_ICEN : integer := 1;
   constant CFG_ISETS : integer := 2;
   constant CFG_ISETSZ : integer := 4;
   constant CFG_ILINE : integer := 8;
-  constant CFG_IREPL : integer := 0;
+  constant CFG_IREPL : integer := 2;
   constant CFG_ILOCK : integer := 0;
   constant CFG_ILRAMEN : integer := 0;
   constant CFG_ILRAMADDR: integer := 16#8E#;
@@ -50,7 +50,7 @@ package config is
   constant CFG_DSETS : integer := 2;
   constant CFG_DSETSZ : integer := 4;
   constant CFG_DLINE : integer := 8;
-  constant CFG_DREPL : integer := 0;
+  constant CFG_DREPL : integer := 2;
   constant CFG_DLOCK : integer := 0;
   constant CFG_DSNOOP : integer := 0 + 1*2 + 4*1;
   constant CFG_DFIXED : integer := 16#0#;
@@ -74,7 +74,7 @@ package config is
   constant CFG_CACHE_FT_EN : integer := 0;
   constant CFG_CACHE_ERRINJ : integer := 0;
   constant CFG_LEON3_NETLIST: integer := 0;
-  constant CFG_DISAS : integer := 0 + 0;
+  constant CFG_DISAS : integer := 1 + 0;
   constant CFG_PCLOW : integer := 2;
   constant CFG_STAT_ENABLE : integer := 1;
   constant CFG_STAT_CNT : integer := (4);
@@ -94,7 +94,7 @@ package config is
   constant CFG_AHB_MON : integer := 0;
   constant CFG_AHB_MONERR : integer := 0;
   constant CFG_AHB_MONWAR : integer := 0;
-  constant CFG_AHB_DTRACE : integer := 0;
+  constant CFG_AHB_DTRACE : integer := 1;
 -- DSU UART
   constant CFG_AHB_UART : integer := 1;
 -- JTAG based DSU interface
@@ -137,9 +137,9 @@ package config is
   constant CFG_GRGPIO_IMASK : integer := 16#0000#;
   constant CFG_GRGPIO_WIDTH : integer := (32);
 -- HPS
-  constant CFG_HPS2FPGA : integer := 1;
-  constant CFG_FPGA2HPS : integer := 1;
-  constant CFG_HPS_RESET : integer := 1;
+  constant CFG_HPS2FPGA : integer := 0;
+  constant CFG_FPGA2HPS : integer := 0;
+  constant CFG_HPS_RESET : integer := 0;
 -- GRLIB debugging
   constant CFG_DUART : integer := 1;
 end;
