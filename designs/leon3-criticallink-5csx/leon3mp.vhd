@@ -1,11 +1,12 @@
 -----------------------------------------------------------------------------
---  LEON3 Terasic Sockit demonstration design
---  By Martin George
+--  LEON3 Criticallink MitySOM 5CSX demonstration design
+--  By Dominik Marszk
 ------------------------------------------------------------------------------
---  This file is a part of the GRLIB VHDL IP LIBRARY
+--  This file is based on the GRLIB VHDL IP LIBRARY demos
 --  Copyright (C) 2003 - 2008, Gaisler Research
 --  Copyright (C) 2008 - 2014, Aeroflex Gaisler
 --  Copyright (C) 2015 - 2016, Cobham Gaisler
+--  Copyright (C) 2017, European Space Agency
 --
 --  This program is free software; you can redistribute it and/or modify
 --  it under the terms of the GNU General Public License as published by
@@ -19,7 +20,7 @@
 --
 --  You should have received a copy of the GNU General Public License
 --  along with this program; if not, write to the Free Software
---  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
+--  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 -------------------------------------------------------------------------------
 
 
@@ -273,14 +274,14 @@ architecture rtl of leon3mp is
 --pragma translate_on
                                   ;
 
-                       
+
   -- Bus indexes
   constant hmi_cpu     : integer := 0;
   constant hmi_ahbuart : integer := hmi_cpu     + CFG_NCPU;
   constant hmi_ahbjtag : integer := hmi_ahbuart + CFG_AHB_UART;
   constant hmi_axi2ahb : integer := hmi_ahbjtag + CFG_AHB_JTAG;
   constant nahbm       : integer := hmi_axi2ahb + CFG_HPS2FPGA;
-  
+
   constant hsi_ahbrom       : integer := 0;
   constant hsi_apbctrl      : integer := hsi_ahbrom      + CFG_AHBROMEN;
   constant hsi_dsu          : integer := hsi_apbctrl     + 1;
@@ -324,11 +325,14 @@ architecture rtl of leon3mp is
 
   signal dbguarti, uarti: uart_in_type;
   signal dbguarto, uarto: uart_out_type;
-  
+
   signal vcc, gnd: std_ulogic;
-  
+
   signal cgi : clkgen_in_type;
   signal cgo : clkgen_out_type;
+
+  signal hps_h2f_axi_master_awaddr : std_logic_vector(29 downto 0);
+  signal hps_h2f_axi_master_araddr : std_logic_vector(29 downto 0);
 
   -----------------------------------------------------------------------------
   -- HPS signals and component
@@ -459,6 +463,8 @@ architecture rtl of leon3mp is
       hps_loan_io_in                   : out   std_logic_vector(66 downto 0);                    -- in
       hps_loan_io_out                  : in    std_logic_vector(66 downto 0) := (others => 'X'); -- out
       hps_loan_io_oe                   : in    std_logic_vector(66 downto 0) := (others => 'X'); -- oe
+      hps_h2f_gp_gp_in                 : in    std_logic_vector(31 downto 0) := (others => 'X'); -- gp_in
+      hps_h2f_gp_gp_out                : out   std_logic_vector(31 downto 0);                    -- gp_out
       bus_clock_clk                    : in    std_logic                     := 'X';             -- clk
       bus_reset_reset_n                : in    std_logic                     := 'X';             -- reset_n
       hps_h2f_100mhz_clock_clk         : out   std_logic;                                        -- clk
@@ -542,13 +548,13 @@ architecture rtl of leon3mp is
       hps_h2f_50mhz_clock_clk          : out   std_logic                                         -- clk
     );
   end component dev_hps;
- 
+
   constant BOARD_FREQ : integer := 100000;        -- Board frequency in KHz
   constant CPU_FREQ : integer := BOARD_FREQ * CFG_CLKMUL / CFG_CLKDIV;  -- cpu frequency in KHz
 
   signal hps_reset_n : std_logic;
   signal sys_rst_n : std_logic;
-  
+
   signal hps_clock_50mhz : std_logic;
 
   -- Used for blinking indicator and controlling loaned HPS signals
@@ -556,6 +562,10 @@ architecture rtl of leon3mp is
   signal led_fpga : std_logic_vector(3 downto 1);
   signal sw_fpga : std_logic_vector(3 downto 1);
   signal loaner_out, loaner_oe, loaner_in : std_logic_vector(66 downto 0);
+
+  -- Internal signal allowing HPS to reset LEON
+  signal hps_h2f_gpo : std_logic_vector(31 downto 0);
+  signal internal_reset_n : std_logic;
 begin
 
   -- Blinking indicator that FPGA is being clocked properly
@@ -565,7 +575,8 @@ begin
       indicator_counter <= indicator_counter + 1;
     end if ;
   end process ;
-  
+
+  internal_reset_n <= hps_h2f_gpo(0);
   HSMC1_RX6_N <= dbguarto.txd;
   dbguarti.rxd <= HSMC1_RX7_N;
 
@@ -591,12 +602,12 @@ begin
   -- Clocking and reset
   -----------------------------------------------------------------------------
   led_fpga(1) <= not clklock;
-  
+
   rstgen0: if CFG_HPS_RESET = 1 generate
-    sys_rst_n <= sw_fpga(2) and hps_reset_n;
+    sys_rst_n <= sw_fpga(2) and internal_reset_n and hps_reset_n;
   end generate;
   nohps: if CFG_HPS_RESET /= 1 generate
-    sys_rst_n <= sw_fpga(2);
+    sys_rst_n <= sw_fpga(2) and internal_reset_n;
   end generate;
 
   cgi.pllctrl <= "00"; cgi.pllrst <= rstraw;
@@ -636,15 +647,15 @@ begin
   ahbmo(ahbmo'high downto nahbm) <= (others => ahbm_none);
   ahbso(ahbso'high downto nahbs) <= (others => ahbs_none);
   apbo(napbs to apbo'high) <= (others => apb_none);
-  
+
   -----------------------------------------------------------------------------
   -- LEON3 Processor(s), DSU
   -----------------------------------------------------------------------------
-  
+
   -- DEV board LEDs and SWs are active low
   led_fpga(3) <= dbgo(0).error; -- dbgo.error is also active low (see page 1109 of GRIP manual)
   dsui.break <= not(sw_fpga(3));
-  led_fpga(2) <= not(dsuo.active); 
+  led_fpga(2) <= not(dsuo.active);
   dsui.enable <= '1';
 
   l3 : if CFG_LEON3 = 1 generate
@@ -820,23 +831,23 @@ begin
       M_AXI_wstrb(3 downto 0)                 => f2h.wstrb(3 downto 0),
       M_AXI_wvalid                            => f2h.wvalid
     );
-    
+
     f2h.araddr(31 downto periph_addrsize)  <= (others => '1');
     f2h.awaddr(31 downto periph_addrsize)  <= (others => '1');
 
   end generate;
-   
+
 
 
   --HPS2FPGA bridge
-  hps2fpga: if CFG_HPS2FPGA = 1 generate  
+  hps2fpga: if CFG_HPS2FPGA = 1 generate
     axi2ahb : entity work.axi2ahb
-      generic map(
+    generic map(
       hindex      => hmi_axi2ahb,
       idsize      => 12,
       lensize     => lensize,
       fifo_depth  => 16
-      )
+    )
     port map(
       ahb_clk     => clkm,
       axi_clk     => clkm,
@@ -883,8 +894,16 @@ begin
       s_axi_wvalid    => h2f.wvalid
     );
 
-    h2f.araddr(31 downto 30) <= "10";
-    h2f.awaddr(31 downto 30) <= "10";
+    hps2fpga_read_mapper : entity work.hps2fpga_mapper
+    port map(
+      axi_addr => hps_h2f_axi_master_araddr,
+      ahb_addr => h2f.araddr
+    );
+    hps2fpga_write_mapper : entity work.hps2fpga_mapper
+    port map(
+      axi_addr => hps_h2f_axi_master_awaddr,
+      ahb_addr => h2f.awaddr
+    );
   end generate;
 dev_hps_inst : component dev_hps
     port map (
@@ -966,12 +985,15 @@ dev_hps_inst : component dev_hps
       hps_loan_io_out                  => loaner_out,                  --                     .out
       hps_loan_io_oe                   => loaner_oe,                   --                     .oe
 
+      hps_h2f_gp_gp_in                 => open,          --           hps_h2f_gp.gp_in
+      hps_h2f_gp_gp_out                => hps_h2f_gpo,   --                     .gp_out
+
       bus_clock_clk                    => clkm,                    --            bus_clock.clk
       bus_reset_reset_n                => rstn,                    --            bus_reset.reset_n
       hps_h2f_100mhz_clock_clk         => open,         -- hps_h2f_100mhz_clock.clk
       hps_h2f_reset_reset_n            => hps_reset_n,       -- hps_h2f_reset.reset_n
       hps_h2f_axi_master_awid          => h2f.awid(11 downto 0),--hps_h2f_axi_master.awid
-      hps_h2f_axi_master_awaddr        => h2f.awaddr(29 downto 0),--.awaddr
+      hps_h2f_axi_master_awaddr        => hps_h2f_axi_master_awaddr,--.awaddr
       hps_h2f_axi_master_awlen         => h2f.awlen,-- .awlen
       hps_h2f_axi_master_awsize        => h2f.awsize,--.awsize
       hps_h2f_axi_master_awburst       => h2f.awburst,--awburst
@@ -991,7 +1013,7 @@ dev_hps_inst : component dev_hps
       hps_h2f_axi_master_bvalid        => h2f.bvalid,--bvalid
       hps_h2f_axi_master_bready        => h2f.bready,--.bready
       hps_h2f_axi_master_arid          => h2f.arid(11 downto 0),--  .arid
-      hps_h2f_axi_master_araddr        => h2f.araddr(29 downto 0),--.araddr
+      hps_h2f_axi_master_araddr        => hps_h2f_axi_master_araddr,--.araddr
       hps_h2f_axi_master_arlen         => h2f.arlen,-- .arlen
       hps_h2f_axi_master_arsize        => h2f.arsize,--.arsize
       hps_h2f_axi_master_arburst       => h2f.arburst,--arburst
@@ -1005,9 +1027,9 @@ dev_hps_inst : component dev_hps
       hps_h2f_axi_master_rresp         => h2f.rresp,--            .rresp
       hps_h2f_axi_master_rlast         => h2f.rlast,--.rlast
       hps_h2f_axi_master_rvalid        => h2f.rvalid,--rvalid
-      hps_h2f_axi_master_rready        => h2f.rready, --rready   
-      hps_f2h_irq1_irq                 => (others => 'X'),                               --         hps_f2h_irq1.irq
-      hps_f2h_irq0_irq                 => (others => 'X'),                               --         hps_f2h_irq0.irq
+      hps_h2f_axi_master_rready        => h2f.rready, --rready
+      hps_f2h_irq1_irq                 => (others => 'X'),   --         hps_f2h_irq1.irq
+      hps_f2h_irq0_irq                 => (others => 'X'),   --         hps_f2h_irq0.irq
       hps_f2h_axi_slave_awid             => f2h.awid(7 downto 0),--hps_f2h_axi_slave.awid
       hps_f2h_axi_slave_awaddr           => f2h.awaddr(31 downto 0),--.awaddr
       hps_f2h_axi_slave_awlen            => f2h.awlen,-- .awlen
@@ -1043,7 +1065,7 @@ dev_hps_inst : component dev_hps
       hps_f2h_axi_slave_rresp            => f2h.rresp,--            .rresp
       hps_f2h_axi_slave_rlast            => f2h.rlast,--.rlast
       hps_f2h_axi_slave_rvalid           => f2h.rvalid,--rvalid
-      hps_f2h_axi_slave_rready           => f2h.rready, --rready               
+      hps_f2h_axi_slave_rready           => f2h.rready, --rready
       hps_h2f_50mhz_clock_clk            => hps_clock_50mhz           --  hps_h2f_50mhz_clock.clk
     );
 

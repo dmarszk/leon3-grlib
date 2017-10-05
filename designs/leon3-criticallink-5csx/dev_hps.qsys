@@ -100,6 +100,7 @@
    internal="hps.h2f_axi_master"
    type="axi"
    dir="start" />
+ <interface name="hps_h2f_gp" internal="hps.h2f_gp" type="conduit" dir="end" />
  <interface
    name="hps_h2f_reset"
    internal="hps.h2f_reset"
@@ -267,7 +268,7 @@
   <parameter name="FPGA_PERIPHERAL_OUTPUT_CLOCK_FREQ_SPIM0_SCLK_OUT" value="100" />
   <parameter name="FPGA_PERIPHERAL_OUTPUT_CLOCK_FREQ_SPIM1_SCLK_OUT" value="100" />
   <parameter name="GPIO_Enable">Yes,No,No,No,No,No,No,No,No,Yes,No,No,No,No,No,No,No,No,No,No,No,No,No,No,No,No,No,No,Yes,No,No,No,No,No,No,No,No,No,No,No,No,No,No,No,No,No,No,No,No,No,No,No,No,No,No,No,No,No,No,No,No,No,No,No,No,No,No,No,No,No,No,No,No,No,No,No,No,No,No,No,No,No,No,No,No,No,No,No,No,No,No,No,No,No,No,No,No,No,No,No</parameter>
-  <parameter name="GP_Enable" value="false" />
+  <parameter name="GP_Enable" value="true" />
   <parameter name="H2F_AXI_CLOCK_FREQ" value="70000000" />
   <parameter name="H2F_CTI_CLOCK_FREQ" value="100" />
   <parameter name="H2F_DEBUG_APB_CLOCK_FREQ" value="100" />
