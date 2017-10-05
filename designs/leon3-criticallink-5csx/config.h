@@ -275,8 +275,8 @@
 /*
  * Hard Processor System
  */
-#undef  CONFIG_HPS2FPGA
-#undef  CONFIG_FPGA2HPS
+#define CONFIG_HPS2FPGA 1
+#define CONFIG_FPGA2HPS 1
 #undef  CONFIG_HPS_RESET
 /*
  * VHDL Debugging        

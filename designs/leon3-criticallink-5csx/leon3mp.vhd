@@ -207,7 +207,7 @@ entity leon3mp is
       HSMC1_RX7         : out std_logic := '0';
       HSMC1_RX8         : out std_logic := '0';
       HSMC1_RX9         : out std_logic := '0';
-      HSMC1_RX10        : out std_logic := '0';
+      HSMC1_RX10        : in std_logic;
       HSMC1_RX11        : out std_logic := '0';
       HSMC1_RX12        : out std_logic := '0';
       HSMC1_RX13        : out std_logic := '0';
@@ -322,8 +322,8 @@ architecture rtl of leon3mp is
   signal del_ce: std_logic;
   signal del_bwe, del_bwa, del_bwb: std_logic_vector(1 downto 0);
 
-  signal dui, ui: uart_in_type;
-  signal duo, uo: uart_out_type;
+  signal dbguarti, uarti: uart_in_type;
+  signal dbguarto, uarto: uart_out_type;
   
   signal vcc, gnd: std_ulogic;
   
@@ -566,8 +566,11 @@ begin
     end if ;
   end process ;
   
-  HSMC1_RX6_N <= duo.txd;
-  dui.rxd <= HSMC1_RX7_N;
+  HSMC1_RX6_N <= dbguarto.txd;
+  dbguarti.rxd <= HSMC1_RX7_N;
+
+  HSMC1_RX10_N <= uarto.txd;
+  uarti.rxd <= HSMC1_RX10;
 
   sw_fpga(1) <= loaner_in(37);
   sw_fpga(2) <= loaner_in(40);
@@ -680,7 +683,7 @@ begin
   uart1 : apbuart
       generic map (pindex   => pi_apbuart, paddr => 1, pirq => 2, console => dbguart,
                    fifosize => CFG_UART1_FIFO)
-      port map (rstn, clkm, apbi, apbo(pi_apbuart), ui, uo);
+      port map (rstn, clkm, apbi, apbo(pi_apbuart), uarti, uarto);
   end generate;
 
   irqctrl : if CFG_IRQ3_ENABLE /= 0 generate
@@ -710,12 +713,12 @@ begin
   dcomgen : if CFG_AHB_UART = 1 generate
     dcom0 : ahbuart                     -- Debug UART
       generic map (hindex => hmi_ahbuart, pindex => pi_ahbuart, paddr => 7)
-      port map (rstn, clkm, dui, duo, apbi, apbo(pi_ahbuart), ahbmi, ahbmo(hmi_ahbuart));
+      port map (rstn, clkm, dbguarti, dbguarto, apbi, apbo(pi_ahbuart), ahbmi, ahbmo(hmi_ahbuart));
   end generate;
   nouah : if CFG_AHB_UART = 0 generate
-    duo.rtsn <= '0'; duo.txd <= '0';
-    duo.scaler <= (others => '0'); duo.txen <= '0';
-    duo.flow <= '0'; duo.rxen <= '0';
+    dbguarto.rtsn <= '0'; dbguarto.txd <= '0';
+    dbguarto.scaler <= (others => '0'); dbguarto.txen <= '0';
+    dbguarto.flow <= '0'; dbguarto.rxen <= '0';
   end generate;
 
   ahbjtaggen0 :if CFG_AHB_JTAG = 1 generate
@@ -737,7 +740,7 @@ begin
   ddr3if0: entity work.ddr3if
     generic map (
       hindex => hsi_ddr3,
-      haddr => 16#400#, hmask => 16#C00#
+      haddr => 16#400#, hmask => 16#E00#
     ) port map (
       pll_ref_clk => CLK2DDR,
       global_reset_n => sys_rst_n,

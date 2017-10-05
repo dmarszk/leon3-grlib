@@ -34,12 +34,6 @@ include $(GRLIB)/bin/Makefile
 
 
 qwiz:
-	@cp $(GRLIB)/boards/$(BOARD)/syspll1.vhd .
-	@if [ ! -d ./syspll1/ ]; then \
-		qmegawiz -silent syspll1.vhd ; \
-	else \
-		echo "syspll1 core already compiled"; \
-	fi ;
 	@cp $(GRLIB)/boards/$(BOARD)/ddr3ctrl1.vhd .
 	@if [ ! -d ./ddr3ctrl1/ ]; then \
 		qmegawiz -silent ddr3ctrl1.vhd ; \
@@ -49,5 +43,4 @@ qwiz:
 
 localclean:
 	@rm -rf hc_output libraries
-	@rm -rf syspll1 syspll1_sim syspll1.[bcpqsv]* syspll1_sim.f
 	@rm -rf ddr3ctrl1 ddr3ctrl1_sim ddr3ctrl1_example_design ddr3ctrl1.[bcpqsv]* ddr3ctrl1_sim.f 

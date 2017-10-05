@@ -137,8 +137,8 @@ package config is
   constant CFG_GRGPIO_IMASK : integer := 16#0000#;
   constant CFG_GRGPIO_WIDTH : integer := (32);
 -- HPS
-  constant CFG_HPS2FPGA : integer := 0;
-  constant CFG_FPGA2HPS : integer := 0;
+  constant CFG_HPS2FPGA : integer := 1;
+  constant CFG_FPGA2HPS : integer := 1;
   constant CFG_HPS_RESET : integer := 0;
 -- GRLIB debugging
   constant CFG_DUART : integer := 1;
