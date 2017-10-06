@@ -25,18 +25,6 @@ Important notes
 * The HPS part of the system requires ARM-processor to be booted. If
   the HPS system is not booted, the bridges will not work.
 
-* The access to the HPS peripherals is given an offset in the AHB2AXI
-  bridge (example: 0xCF700000 translates to 0xFF700000). This can be
-  changed by the user.
-
-* The access to the LEON peripherals from HPS is done through AXI2AHB
-  bridge mapped in HPS under 0xC0000000 - 0xFBFFFFFF address space,
-	with dynamic address translation of 4 memory regions:
-	- 0xC0000000 -> 0x40000000 (RAM)
-	- 0xD0000000 -> 0x50000000 (RAM)
-	- 0xE0000000 -> 0x80000000 (APB peripherals)
-	- 0xF0000000 -> 0x90000000 (DSU)
-
 * This template was designed with using the Linux image delivered
   with the board in mind.
 
@@ -45,7 +33,7 @@ Important notes
   chance of any synchronization errors it is possible to lower the
   altera JTAG clock frequency by using the command:
 
-	jtagconfig --setparam <cable number> JtagClock <clock freq>
+  jtagconfig --setparam <cable number> JtagClock <clock freq>
 
   Avaiable options for clock freq are 6M, 16M and 24M where 24M is
   the default value. If you unplug the USB Blaster II cable the value
@@ -78,11 +66,29 @@ Push button assignments:
   SW1 - unused
 
 HPS-FPGA control signals:
-	LEON starts in reset mode.
-	HPS-LEON active low reset is controlled by HPS using H2F General Purpose Output signal GPO[0].
-	It allows writing to the LEON memory from HPS side before releasing the reset.
-	GPO control register address on HPS bus is 0xFF706010.
-	To release the reset write value 0x1 to the control register.
+  LEON CPU starts in reset mode, controlled by HPS.
+  LEON system active high reset is controlled by HPS using H2F General Purpose Output signal GPO[0].
+  LEON CPU active low reset is controlled by HPS using H2F General Purpose Output signal GPO[1].
+  It allows writing to the LEON memory from HPS side before releasing the CPU reset.
+  GPO control register address on HPS bus is 0xFF706010.
+  To set the bus reset - write value 0x1 to the control register.
+  To release the CPU reset - write value 0x2 to the control register.
+
+HPS-FPGA bridge:
+  The access to the LEON peripherals from HPS is done through AXI2AHB
+  bridge mapped in HPS under 0xC0000000 - 0xFBFFFFFF address space,
+  with dynamic address translation of 4 memory regions:
+  - 0xC0000000 -> 0x40000000 (RAM)
+  - 0xD0000000 -> 0x50000000 (RAM)
+  - 0xE0000000 -> 0x80000000 (APB peripherals)
+  - 0xF0000000 -> 0x90000000 (DSU)
+	The LEON bus reset has to be programatically released before issuing
+	any reads on HPS-FPGA bridge. Otherwise the system will freeze.
+
+FPGA-HPS bridge:
+  The access to the HPS peripherals is given an offset in the AHB2AXI
+  bridge (example: 0xCF700000 translates to 0xFF700000). This can be
+  changed by the user.
 
 
 Interrupts:

@@ -300,6 +300,7 @@ architecture rtl of leon3mp is
   signal clkm: std_ulogic;
   signal ssclk: std_ulogic;
   signal rstn: std_ulogic;
+  signal cpurstn: std_ulogic;
   signal rstraw: std_ulogic;
 
   signal ahbmi: ahb_mst_in_type;
@@ -554,6 +555,7 @@ architecture rtl of leon3mp is
 
   signal hps_reset_n : std_logic;
   signal sys_rst_n : std_logic;
+  signal cpu_rst_n : std_logic;
 
   signal hps_clock_50mhz : std_logic;
 
@@ -563,9 +565,10 @@ architecture rtl of leon3mp is
   signal sw_fpga : std_logic_vector(3 downto 1);
   signal loaner_out, loaner_oe, loaner_in : std_logic_vector(66 downto 0);
 
-  -- Internal signal allowing HPS to reset LEON
+  -- Internal signal allowing HPS to reset LEON bus
   signal hps_h2f_gpo : std_logic_vector(31 downto 0);
-  signal internal_reset_n : std_logic;
+  signal h2f_leon_sys_reset_n : std_logic;
+  signal h2f_leon_cpu_reset_n : std_logic;
 begin
 
   -- Blinking indicator that FPGA is being clocked properly
@@ -576,7 +579,12 @@ begin
     end if ;
   end process ;
 
-  internal_reset_n <= hps_h2f_gpo(0);
+  -- All H2F GPO signals are initialized with 0
+  -- Bus does not start in reset mode, so all peripherals are accessible through H2F bridge.
+  -- CPU starts in reset mode, so it does not execute any instructions
+  -- until HPS initializes the program in RAM.
+  h2f_leon_sys_reset_n <= not hps_h2f_gpo(0);
+  h2f_leon_cpu_reset_n <= hps_h2f_gpo(1);
   HSMC1_RX6_N <= dbguarto.txd;
   dbguarti.rxd <= HSMC1_RX7_N;
 
@@ -604,11 +612,14 @@ begin
   led_fpga(1) <= not clklock;
 
   rstgen0: if CFG_HPS_RESET = 1 generate
-    sys_rst_n <= sw_fpga(2) and internal_reset_n and hps_reset_n;
+    sys_rst_n <= sw_fpga(2) and h2f_leon_sys_reset_n and hps_reset_n;
   end generate;
   nohps: if CFG_HPS_RESET /= 1 generate
-    sys_rst_n <= sw_fpga(2) and internal_reset_n;
+    sys_rst_n <= sw_fpga(2) and h2f_leon_sys_reset_n;
   end generate;
+
+
+  cpu_rst_n <= sys_rst_n and h2f_leon_cpu_reset_n;
 
   cgi.pllctrl <= "00"; cgi.pllrst <= rstraw;
 
@@ -627,6 +638,10 @@ begin
   rstgen1: rstgen
     generic map (syncrst => CFG_NOASYNC)
     port map (sys_rst_n, clkm, clklock, rstn, rstraw);
+
+  cpurstgen1: rstgen
+    generic map (syncrst => CFG_NOASYNC)
+    port map (cpu_rst_n, clkm, clklock, cpurstn, rstraw);
 
   -----------------------------------------------------------------------------
   -- AMBA bus fabric
@@ -667,7 +682,7 @@ begin
                    CFG_DLOCK, CFG_DSNOOP, CFG_ILRAMEN, CFG_ILRAMSZ, CFG_ILRAMADDR, CFG_DLRAMEN,
                    CFG_DLRAMSZ, CFG_DLRAMADDR, CFG_MMUEN, CFG_ITLBNUM, CFG_DTLBNUM, CFG_TLB_TYPE, CFG_TLB_REP,
                    CFG_LDDEL, disas, CFG_ITBSZ, CFG_PWD, CFG_SVT, CFG_RSTADDR, CFG_NCPU-1)
-        port map (clkm, rstn, ahbmi, ahbmo(i), ahbsi, ahbso,
+        port map (clkm, cpurstn, ahbmi, ahbmo(i), ahbsi, ahbso,
                 irqi(i), irqo(i), dbgi(i), dbgo(i));
     end generate;
 
