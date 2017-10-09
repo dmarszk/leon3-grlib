@@ -98,14 +98,6 @@
 -- JTAG based DSU interface
   constant CFG_AHB_JTAG	: integer := CONFIG_DSU_JTAG;
 
--- Ethernet DSU
-  constant CFG_DSU_ETH	: integer := CONFIG_DSU_ETH + CONFIG_DSU_ETH_PROG + CONFIG_DSU_ETH_DIS;
-  constant CFG_ETH_BUF 	: integer := CFG_DSU_ETHB;
-  constant CFG_ETH_IPM 	: integer := 16#CONFIG_DSU_IPMSB#;
-  constant CFG_ETH_IPL 	: integer := 16#CONFIG_DSU_IPLSB#;
-  constant CFG_ETH_ENM 	: integer := 16#CONFIG_DSU_ETHMSB#;
-  constant CFG_ETH_ENL 	: integer := 16#CONFIG_DSU_ETHLSB#;
-
 -- AHB ROM
   constant CFG_AHBROMEN	: integer := CONFIG_AHBROM_ENABLE;
   constant CFG_AHBROPIP	: integer := CONFIG_AHBROM_PIPE;
@@ -118,6 +110,10 @@
   constant CFG_AHBRSZ	: integer := CFG_AHBRAMSZ;
   constant CFG_AHBRADDR	: integer := 16#CONFIG_AHBRAM_START#;
   constant CFG_AHBRPIPE : integer := CONFIG_AHBRAM_PIPE;
+
+-- AHB status register
+  constant CFG_AHBSTAT 	: integer := CONFIG_AHBSTAT_ENABLE;
+  constant CFG_AHBSTATN	: integer := CONFIG_AHBSTAT_NFTSLV;
 
 -- UART 1
   constant CFG_UART1_ENABLE : integer := CONFIG_UART1_ENABLE;

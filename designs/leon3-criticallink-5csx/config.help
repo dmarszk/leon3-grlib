@@ -774,40 +774,6 @@ CONFIG_DSU_JTAG
   Amontech JTAG key, various FTDI chip based USB/JTAG devices, and
   Actel Flash Pro 3/4 cable.
 
-Ethernet DSU enable
-CONFIG_DSU_ETH
-  Say Y to enable the Ethernet Debug Communication Link (EDCL). The link
-  provides a DSU gateway between ethernet and the AHB bus. Debugging is
-  done at 10 or 100 Mbit/s, using the GRMON debug monitor. You must
-  enable the GRETH Ethernet MAC for this option to become active.
-
-Size of EDCL trace buffer
-CONFIG_DSU_ETHSZ1
-  Select the buffer size (in kbytes) for the EDCL. 1 or 2 kbyte is
-  usually enough, while a larger buffer will increase the transfer rate.
-  When operating at 100 Mbit, use a buffer size of at least 8 kbyte for
-  maximum throughput.
-
-MSB IP address
-CONFIG_DSU_IPMSB
-  Set the MSB 16 bits of the IP address of the EDCL.
-
-LSB IP address
-CONFIG_DSU_IPLSB
-  Set the LSB 16 bits of the IP address of the EDCL.
-
-MSB ethernet address
-CONFIG_DSU_ETHMSB
-  Set the MSB 24 bits of the ethernet address of the EDCL.
-
-LSB ethernet address
-CONFIG_DSU_ETHLSB
-  Set the LSB 24 bits of the ethernet address of the EDCL.
-
-Programmable MAC/IP address
-CONFIG_DSU_ETH_PROG
-  Say Y to make the LSB 4 bits of the EDCL MAC and IP address
-  configurable using the ethi.edcladdr inputs.
 On-chip rom
 CONFIG_AHBROM_ENABLE
   Say Y here to add a block on on-chip rom to the AHB bus. The ram
@@ -859,6 +825,17 @@ CONFIG_AHBRAM_PIPE
   Set this option to add an extra pipeline stage to the read data of the 
   on-chip RAM. This can improve timing, especially when the memory is 
   large, at the cost of adding an additional cycle delay on read.
+AHB status register
+CONFIG_AHBSTAT_ENABLE
+  Say Y here to enable the AHB status register (AHBSTAT IP).
+  The register will latch the AHB address and master index when
+  an error response is returned by any AHB slave.
+
+SDRAM separate address buses
+CONFIG_AHBSTAT_NFTSLV
+  The AHB status register can also latch the AHB address on an external
+  input. Select here how many of such inputs are required.
+
 UART1 enable
 CONFIG_UART1_ENABLE
   Say Y here to enable UART1, or the console UART. This is needed to

@@ -65,6 +65,27 @@ Push button assignments:
   SW2 - Reset LEON system
   SW1 - unused
 
+GRGPIO port mapping:
+	GRGPIO IP-core in the design has 16 pins, out of which 8 are
+	mapped to the FPGA pins. Remaining 8 are connected to HPS-FPGA interface.
+	Pins 0-11 of the pins are capable of generating an interrupt.
+	GPIO[0] - HSMC_TX0
+	GPIO[1] - HSMC_TX0_N
+	GPIO[2] - HSMC_TX1
+	GPIO[3] - HSMC_TX1_N
+	GPIO[4] - HSMC_TX2
+	GPIO[5] - HSMC_TX2_N
+	GPIO[6] - HSMC_TX3
+	GPIO[7] - HSMC_TX3_N
+	GPIO[8] - H2F GPO[8] (input only)
+	GPIO[9] - H2F GPO[9] (input only)
+	GPIO[10] - H2F GPO[10] (input only)
+	GPIO[11] - H2F GPO[11] (input only)
+	GPIO[12] - H2F GPI[12] (output only)
+	GPIO[13] - H2F GPI[13] (output only)
+	GPIO[14] - H2F GPI[14] (output only)
+	GPIO[15] - H2F GPI[15] (output only)
+
 HPS-FPGA control signals:
   LEON CPU starts in reset mode, controlled by HPS.
   LEON system active high reset is controlled by HPS using H2F General Purpose Output signal GPO[0].
@@ -94,7 +115,7 @@ FPGA-HPS bridge:
 
 
 Interrupts:
-  7 - APB UART
+  2 - APB UART
   8 - Timer
 
 -----------

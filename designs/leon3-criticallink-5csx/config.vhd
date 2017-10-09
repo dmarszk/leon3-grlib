@@ -99,13 +99,6 @@ package config is
   constant CFG_AHB_UART : integer := 1;
 -- JTAG based DSU interface
   constant CFG_AHB_JTAG : integer := 1;
--- Ethernet DSU
-  constant CFG_DSU_ETH : integer := 0 + 0 + 0;
-  constant CFG_ETH_BUF : integer := 1;
-  constant CFG_ETH_IPM : integer := 16#C0A8#;
-  constant CFG_ETH_IPL : integer := 16#0033#;
-  constant CFG_ETH_ENM : integer := 16#020000#;
-  constant CFG_ETH_ENL : integer := 16#000009#;
 -- AHB ROM
   constant CFG_AHBROMEN : integer := 1;
   constant CFG_AHBROPIP : integer := 0;
@@ -117,6 +110,9 @@ package config is
   constant CFG_AHBRSZ : integer := 1;
   constant CFG_AHBRADDR : integer := 16#A00#;
   constant CFG_AHBRPIPE : integer := 0;
+-- AHB status register
+  constant CFG_AHBSTAT : integer := 0;
+  constant CFG_AHBSTATN : integer := 1;
 -- UART 1
   constant CFG_UART1_ENABLE : integer := 1;
   constant CFG_UART1_FIFO : integer := 4;

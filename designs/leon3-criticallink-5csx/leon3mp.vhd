@@ -164,10 +164,10 @@ entity leon3mp is
       HSMC1_D1          : out std_logic := '0';
       HSMC1_D2          : out std_logic := '0';
       HSMC1_D3          : out std_logic := '0';
-      HSMC1_TX0         : out std_logic := '0';
-      HSMC1_TX1         : out std_logic := '0';
-      HSMC1_TX2         : out std_logic := '0';
-      HSMC1_TX3         : out std_logic := '0';
+      HSMC1_TX0         : inout std_logic := '0';
+      HSMC1_TX1         : inout std_logic := '0';
+      HSMC1_TX2         : inout std_logic := '0';
+      HSMC1_TX3         : inout std_logic := '0';
       HSMC1_TX4         : out std_logic := '0';
       HSMC1_TX5         : out std_logic := '0';
       HSMC1_TX6         : out std_logic := '0';
@@ -181,10 +181,10 @@ entity leon3mp is
       HSMC1_TX14        : out std_logic;
       HSMC1_TX15        : out std_logic;
       HSMC1_TX16        : out std_logic := '0';
-      HSMC1_TX0_N       : out std_logic := '0';
-      HSMC1_TX1_N       : out std_logic := '0';
-      HSMC1_TX2_N       : out std_logic := '0';
-      HSMC1_TX3_N       : out std_logic := '0';
+      HSMC1_TX0_N       : inout std_logic := '0';
+      HSMC1_TX1_N       : inout std_logic := '0';
+      HSMC1_TX2_N       : inout std_logic := '0';
+      HSMC1_TX3_N       : inout std_logic := '0';
       HSMC1_TX4_N       : out std_logic := '0';
       HSMC1_TX5_N       : out std_logic := '0';
       HSMC1_TX6_N       : out std_logic := '0';
@@ -274,27 +274,9 @@ architecture rtl of leon3mp is
 --pragma translate_on
                                   ;
 
-
-  -- Bus indexes
-  constant hmi_cpu     : integer := 0;
-  constant hmi_ahbuart : integer := hmi_cpu     + CFG_NCPU;
-  constant hmi_ahbjtag : integer := hmi_ahbuart + CFG_AHB_UART;
-  constant hmi_axi2ahb : integer := hmi_ahbjtag + CFG_AHB_JTAG;
-  constant nahbm       : integer := hmi_axi2ahb + CFG_HPS2FPGA;
-
-  constant hsi_ahbrom       : integer := 0;
-  constant hsi_apbctrl      : integer := hsi_ahbrom      + CFG_AHBROMEN;
-  constant hsi_dsu          : integer := hsi_apbctrl     + 1;
-  constant hsi_ddr3         : integer := hsi_dsu         + CFG_DSU;
-  constant hsi_ahb2axi      : integer := hsi_ddr3        + 1;
-  constant hsi_ahbrep       : integer := hsi_ahb2axi     + CFG_FPGA2HPS;
-  constant nahbs            : integer := hsi_ahbrep      + USE_AHBREP;
-
-  constant pi_apbuart : integer := 0;
-  constant pi_irqmp   : integer := pi_apbuart + CFG_UART1_ENABLE;
-  constant pi_gpt     : integer := pi_irqmp   + CFG_IRQ3_ENABLE;
-  constant pi_ahbuart : integer := pi_gpt     + CFG_GPT_ENABLE;
-  constant napbs      : integer := pi_ahbuart + CFG_AHB_UART;
+  constant maxahbm : integer := (CFG_LEON3*CFG_NCPU)+3;
+  constant maxahbs : integer := 8;
+  constant maxapbs : integer := 16;
 
   signal clklock: std_ulogic;
   signal clkm: std_ulogic;
@@ -303,12 +285,12 @@ architecture rtl of leon3mp is
   signal cpurstn: std_ulogic;
   signal rstraw: std_ulogic;
 
-  signal ahbmi: ahb_mst_in_type;
-  signal ahbmo: ahb_mst_out_vector;
-  signal ahbsi: ahb_slv_in_type;
-  signal ahbso: ahb_slv_out_vector;
-  signal apbi: apb_slv_in_type;
-  signal apbo: apb_slv_out_vector;
+  signal apbi  : apb_slv_in_type;
+  signal apbo  : apb_slv_out_vector := (others => apb_none);
+  signal ahbsi : ahb_slv_in_type;
+  signal ahbso : ahb_slv_out_vector := (others => ahbs_none);
+  signal ahbmi : ahb_mst_in_type;
+  signal ahbmo : ahb_mst_out_vector := (others => ahbm_none);
 
   signal irqi: irq_in_vector(CFG_NCPU-1 downto 0);
   signal irqo: irq_out_vector(CFG_NCPU-1 downto 0);
@@ -318,14 +300,17 @@ architecture rtl of leon3mp is
   signal dsuo: dsu_out_type;
   signal gpti: gptimer_in_type;
 
+  signal gpioi : gpio_in_type;
+  signal gpioo : gpio_out_type;
+
   signal sri: memory_in_type;
   signal sro: memory_out_type;
   signal del_addr: std_logic_vector(26 downto 1);
   signal del_ce: std_logic;
   signal del_bwe, del_bwa, del_bwb: std_logic_vector(1 downto 0);
 
-  signal dbguarti, uarti: uart_in_type;
-  signal dbguarto, uarto: uart_out_type;
+  signal dbguarti, uart1i: uart_in_type;
+  signal dbguarto, uart1o: uart_out_type;
 
   signal vcc, gnd: std_ulogic;
 
@@ -553,6 +538,8 @@ architecture rtl of leon3mp is
   constant BOARD_FREQ : integer := 100000;        -- Board frequency in KHz
   constant CPU_FREQ : integer := BOARD_FREQ * CFG_CLKMUL / CFG_CLKDIV;  -- cpu frequency in KHz
 
+  signal stati : ahbstat_in_type;
+
   signal hps_reset_n : std_logic;
   signal sys_rst_n : std_logic;
   signal cpu_rst_n : std_logic;
@@ -565,8 +552,11 @@ architecture rtl of leon3mp is
   signal sw_fpga : std_logic_vector(3 downto 1);
   signal loaner_out, loaner_oe, loaner_in : std_logic_vector(66 downto 0);
 
-  -- Internal signal allowing HPS to reset LEON bus
+  -- Internal signal allowing HPS to reset LEON bus.
+  -- Also GPO[8:11] and GPI[12:15] implement a generic
+  -- signaling mechanism between HPS and LEON
   signal hps_h2f_gpo : std_logic_vector(31 downto 0);
+  signal hps_h2f_gpi : std_logic_vector(31 downto 0);
   signal h2f_leon_sys_reset_n : std_logic;
   signal h2f_leon_cpu_reset_n : std_logic;
 begin
@@ -588,8 +578,8 @@ begin
   HSMC1_RX6_N <= dbguarto.txd;
   dbguarti.rxd <= HSMC1_RX7_N;
 
-  HSMC1_RX10_N <= uarto.txd;
-  uarti.rxd <= HSMC1_RX10;
+  HSMC1_RX10_N <= uart1o.txd;
+  uart1i.rxd <= HSMC1_RX10;
 
   sw_fpga(1) <= loaner_in(37);
   sw_fpga(2) <= loaner_in(40);
@@ -641,7 +631,7 @@ begin
 
   cpurstgen1: rstgen
     generic map (syncrst => CFG_NOASYNC)
-    port map (cpu_rst_n, clkm, clklock, cpurstn, rstraw);
+    port map (cpu_rst_n, clkm, clklock, cpurstn, open);
 
   -----------------------------------------------------------------------------
   -- AMBA bus fabric
@@ -652,16 +642,12 @@ begin
                  rrobin => CFG_RROBIN,ioaddr => CFG_AHBIO, fpnpen => CFG_FPNPEN,
                  enbusmon => CFG_AHB_MON, assertwarn => CFG_AHB_MONWAR,
                  asserterr => CFG_AHB_MONERR, ahbtrace => CFG_AHB_DTRACE,
-                 nahbm => nahbm, nahbs => nahbs)
+                 nahbm => maxahbm, nahbs => maxahbs)
     port map (rstn,clkm,ahbmi,ahbmo,ahbsi,ahbso);
 
   apbctrl0: apbctrl
-    generic map (hindex => hsi_apbctrl, haddr => CFG_APBADDR, nslaves => napbs)
-    port map (rstn,clkm,ahbsi,ahbso(hsi_apbctrl),apbi,apbo);
-
-  ahbmo(ahbmo'high downto nahbm) <= (others => ahbm_none);
-  ahbso(ahbso'high downto nahbs) <= (others => ahbs_none);
-  apbo(napbs to apbo'high) <= (others => apb_none);
+    generic map (hindex => 1, haddr => CFG_APBADDR, nslaves => 16)
+    port map (rstn,clkm,ahbsi,ahbso(1),apbi,apbo);
 
   -----------------------------------------------------------------------------
   -- LEON3 Processor(s), DSU
@@ -671,7 +657,6 @@ begin
   led_fpga(3) <= dbgo(0).error; -- dbgo.error is also active low (see page 1109 of GRIP manual)
   dsui.break <= not(sw_fpga(3));
   led_fpga(2) <= not(dsuo.active);
-  dsui.enable <= '1';
 
   l3 : if CFG_LEON3 = 1 generate
     cpu : for i in 0 to CFG_NCPU-1 generate
@@ -688,9 +673,10 @@ begin
 
     dsugen : if CFG_DSU = 1 generate
       dsu0 : dsu3                         -- LEON3 Debug Support Unit
-        generic map (hindex => hsi_dsu, haddr => 16#900#, hmask => 16#F00#,
+        generic map (hindex => 2, haddr => 16#900#, hmask => 16#F00#,
                    ncpu   => CFG_NCPU, tbits => 30, tech => memtech, irq => 0, kbytes => CFG_ATBSZ)
-        port map (rstn, clkm, ahbmi, ahbsi, ahbso(hsi_dsu), dbgo, dbgi, dsui, dsuo);
+        port map (rstn, clkm, ahbmi, ahbsi, ahbso(2), dbgo, dbgi, dsui, dsuo);
+      dsui.enable <= '1';
     end generate;
   end generate;
   noleon: if CFG_LEON3 = 0 generate
@@ -698,7 +684,7 @@ begin
     dbgo <= (others => dbgo_none);
   end generate;
   nodsu : if CFG_DSU = 0 or CFG_LEON3 = 0 generate
-    dsuo.tstop <= '0'; dsuo.active <= '0'; dsuo.pwd <= (others => '0');
+    dsuo.tstop <= '0'; dsuo.active <= '0'; ahbso(2) <= ahbs_none;
   end generate;
 
   -----------------------------------------------------------------------------
@@ -707,30 +693,73 @@ begin
 
   ua0 : if CFG_UART1_ENABLE /= 0 generate
   uart1 : apbuart
-      generic map (pindex   => pi_apbuart, paddr => 1, pirq => 2, console => dbguart,
+      generic map (pindex   => 1, paddr => 1, pirq => 2, console => dbguart,
                    fifosize => CFG_UART1_FIFO)
-      port map (rstn, clkm, apbi, apbo(pi_apbuart), uarti, uarto);
+      port map (rstn, clkm, apbi, apbo(1), uart1i, uart1o);
+    uart1i.ctsn   <= '0';
+    uart1i.extclk <= '0';
   end generate;
 
   irqctrl : if CFG_IRQ3_ENABLE /= 0 generate
     irqctrl0 : irqmp                    -- interrupt controller
-      generic map (pindex => pi_irqmp, paddr => 2, ncpu => CFG_NCPU)
-      port map (rstn, clkm, apbi, apbo(pi_irqmp), irqo, irqi);
+      generic map (pindex => 2, paddr => 2, ncpu => CFG_NCPU)
+      port map (rstn, clkm, apbi, apbo(2), irqo, irqi);
   end generate;
   irq3 : if CFG_IRQ3_ENABLE = 0 generate
     x : for i in 0 to CFG_NCPU-1 generate
       irqi(i).irl <= "0000";
     end generate;
+    apbo(2) <= apb_none;
   end generate;
 
   gpt : if CFG_GPT_ENABLE /= 0 generate
     timer0 : gptimer                    -- timer unit
-      generic map (pindex => pi_gpt, paddr => 3, pirq => CFG_GPT_IRQ,
+      generic map (pindex => 3, paddr => 3, pirq => CFG_GPT_IRQ,
                    sepirq => CFG_GPT_SEPIRQ, sbits => CFG_GPT_SW, ntimers => CFG_GPT_NTIM,
                    nbits  => CFG_GPT_TW)
-      port map (rstn, clkm, apbi, apbo(pi_gpt), gpti, open);
+      port map (rstn, clkm, apbi, apbo(3), gpti, open);
     gpti <= gpti_dhalt_drive(dsuo.tstop);
   end generate;
+
+  nogpt : if CFG_GPT_ENABLE = 0 generate apbo(3) <= apb_none; end generate;
+
+  gpio0 : if CFG_GRGPIO_ENABLE /= 0 generate     -- GPIO unit
+    grgpio0: grgpio
+    generic map(pindex => 8, paddr => 8, imask => CFG_GRGPIO_IMASK, nbits => CFG_GRGPIO_WIDTH)
+    port map(rst => rstn, clk => clkm, apbi => apbi, apbo => apbo(8), gpioi => gpioi, gpioo => gpioo);
+
+    pio_pad0 : iopad generic map (tech => padtech, level => cmos, voltage => x25v)
+      port map (HSMC1_TX0, gpioo.dout(0), gpioo.oen(0), gpioi.din(0));
+    pio_pad1 : iopad generic map (tech => padtech, level => cmos, voltage => x25v)
+      port map (HSMC1_TX0_N, gpioo.dout(1), gpioo.oen(1), gpioi.din(1));
+    pio_pad2 : iopad generic map (tech => padtech, level => cmos, voltage => x25v)
+      port map (HSMC1_TX1, gpioo.dout(2), gpioo.oen(2), gpioi.din(2));
+    pio_pad3 : iopad generic map (tech => padtech, level => cmos, voltage => x25v)
+      port map (HSMC1_TX1_N, gpioo.dout(3), gpioo.oen(3), gpioi.din(3));
+    pio_pad4 : iopad generic map (tech => padtech, level => cmos, voltage => x25v)
+      port map (HSMC1_TX2, gpioo.dout(4), gpioo.oen(4), gpioi.din(4));
+    pio_pad5 : iopad generic map (tech => padtech, level => cmos, voltage => x25v)
+      port map (HSMC1_TX2_N, gpioo.dout(5), gpioo.oen(5), gpioi.din(5));
+    pio_pad6 : iopad generic map (tech => padtech, level => cmos, voltage => x25v)
+      port map (HSMC1_TX3, gpioo.dout(6), gpioo.oen(6), gpioi.din(6));
+    pio_pad7 : iopad generic map (tech => padtech, level => cmos, voltage => x25v)
+      port map (HSMC1_TX3_N, gpioo.dout(7), gpioo.oen(7), gpioi.din(7));
+
+    pio_pads2 : for i in 8 to 11 generate
+      gpioi.din(i) <= hps_h2f_gpo(i);
+    end generate;
+    pio_pads3 : for i in 12 to 15 generate
+      hps_h2f_gpi(i) <= gpioo.dout(i);
+    end generate;
+  end generate;
+
+  ahbs : if CFG_AHBSTAT = 1 generate   -- AHB status register
+    stati <= ahbstat_in_none;
+    ahbstat0 : ahbstat generic map (pindex => 15, paddr => 15, pirq => 7,
+   nftslv => CFG_AHBSTATN)
+      port map (rstn, clkm, ahbmi, ahbsi, stati, apbi, apbo(15));
+  end generate;
+
 
   -----------------------------------------------------------------------------
   -- Debug links
@@ -738,8 +767,8 @@ begin
 
   dcomgen : if CFG_AHB_UART = 1 generate
     dcom0 : ahbuart                     -- Debug UART
-      generic map (hindex => hmi_ahbuart, pindex => pi_ahbuart, paddr => 7)
-      port map (rstn, clkm, dbguarti, dbguarto, apbi, apbo(pi_ahbuart), ahbmi, ahbmo(hmi_ahbuart));
+      generic map (hindex => CFG_LEON3*CFG_NCPU+1, pindex => 7, paddr => 7)
+      port map (rstn, clkm, dbguarti, dbguarto, apbi, apbo(7), ahbmi, ahbmo(CFG_LEON3*CFG_NCPU+1));
   end generate;
   nouah : if CFG_AHB_UART = 0 generate
     dbguarto.rtsn <= '0'; dbguarto.txd <= '0';
@@ -748,8 +777,8 @@ begin
   end generate;
 
   ahbjtaggen0 :if CFG_AHB_JTAG = 1 generate
-    ahbjtag0 : ahbjtag generic map(tech => fabtech, hindex => hmi_ahbjtag, nsync => 2, versel => 0)
-      port map(rstn, clkm, gnd, gnd, gnd, open, ahbmi, ahbmo(hmi_ahbjtag),
+    ahbjtag0 : ahbjtag generic map(tech => fabtech, hindex => CFG_LEON3*CFG_NCPU, nsync => 2, versel => 0)
+      port map(rstn, clkm, gnd, gnd, gnd, open, ahbmi, ahbmo(CFG_LEON3*CFG_NCPU),
                open, open, open, open, open, open, open, gnd);
   end generate;
 
@@ -757,15 +786,24 @@ begin
   -- Memory controllers
   -----------------------------------------------------------------------------
 
+  ---  AHB ROM
   bpromgen : if CFG_AHBROMEN /= 0 generate
     brom : entity work.ahbrom
-      generic map (hindex => hsi_ahbrom, haddr => CFG_AHBRODDR, pipe => CFG_AHBROPIP)
-      port map ( rstn, clkm, ahbsi, ahbso(hsi_ahbrom));
+      generic map (hindex => 0, haddr => CFG_AHBRODDR, pipe => CFG_AHBROPIP)
+      port map ( rstn, clkm, ahbsi, ahbso(0));
   end generate;
 
+  ---  AHB RAM
+  ocram : if CFG_AHBRAMEN = 1 generate
+    ahbram0 : ahbram generic map (hindex => 4, haddr => CFG_AHBRADDR,
+   tech => CFG_MEMTECH, kbytes => CFG_AHBRSZ, pipe => CFG_AHBRPIPE)
+    port map ( rstn, clkm, ahbsi, ahbso(4));
+  end generate;
+
+  ---  DDR3
   ddr3if0: entity work.ddr3if
     generic map (
-      hindex => hsi_ddr3,
+      hindex => 5,
       haddr => 16#400#, hmask => 16#F00#
     ) port map (
       pll_ref_clk => CLK2DDR,
@@ -789,7 +827,7 @@ begin
       ahb_clk => clkm,
       ahb_rst => rstn,
       ahbsi => ahbsi,
-      ahbso => ahbso(hsi_ddr3)
+      ahbso => ahbso(5)
       );
 
 
@@ -801,13 +839,13 @@ begin
   fpga2hps: if CFG_FPGA2HPS = 1 generate
   ahb2axi0 : entity work.ahb2axi
     generic map(
-     hindex => hsi_ahb2axi, haddr => 16#C00#, hmask => 16#F00#,
+     hindex => 3, haddr => 16#C00#, hmask => 16#F00#,
      idsize => idsize, lensize => lensize, addrsize => periph_addrsize)
     port map(
       rstn                                    => rstn,
       clk                                     => clkm,
       ahbsi                                   => ahbsi,
-      ahbso                                   => ahbso(hsi_ahb2axi),
+      ahbso                                   => ahbso(3),
       M_AXI_araddr                            => f2h.araddr(periph_addrsize-1 downto 0),
       M_AXI_arburst(1 downto 0)               => f2h.arburst(1 downto 0),
       M_AXI_arcache(3 downto 0)               => f2h.arcache(3 downto 0),
@@ -858,7 +896,7 @@ begin
   hps2fpga: if CFG_HPS2FPGA = 1 generate
     axi2ahb : entity work.axi2ahb
     generic map(
-      hindex      => hmi_axi2ahb,
+      hindex      => CFG_LEON3*CFG_NCPU+2,
       idsize      => 12,
       lensize     => lensize,
       fifo_depth  => 16
@@ -868,7 +906,7 @@ begin
       axi_clk     => clkm,
       resetn      => rstn,
       ahbi        => ahbmi,
-      ahbo        => ahbmo(hmi_axi2ahb),
+      ahbo        => ahbmo(CFG_LEON3*CFG_NCPU+2),
       s_axi_araddr    => h2f.araddr,
       s_axi_arburst   => h2f.arburst,
       s_axi_arcache   => h2f.arcache,
@@ -1000,7 +1038,7 @@ dev_hps_inst : component dev_hps
       hps_loan_io_out                  => loaner_out,                  --                     .out
       hps_loan_io_oe                   => loaner_oe,                   --                     .oe
 
-      hps_h2f_gp_gp_in                 => open,          --           hps_h2f_gp.gp_in
+      hps_h2f_gp_gp_in                 => hps_h2f_gpi,          --           hps_h2f_gp.gp_in
       hps_h2f_gp_gp_out                => hps_h2f_gpo,   --                     .gp_out
 
       bus_clock_clk                    => clkm,                    --            bus_clock.clk
@@ -1091,8 +1129,8 @@ dev_hps_inst : component dev_hps
 -- pragma translate_off
   rep: if USE_AHBREP/=0 generate
     ahbrep0: ahbrep
-      generic map (hindex => hsi_ahbrep, haddr => 16#200#)
-      port map (rstn,clkm,ahbsi,ahbso(hsi_ahbrep));
+      generic map (hindex => 6, haddr => 16#200#)
+      port map (rstn,clkm,ahbsi,ahbso(6));
   end generate;
 
   x : report_version
@@ -1104,6 +1142,12 @@ dev_hps_inst : component dev_hps
    mdel => 1
   );
 -- pragma translate_on
+ -----------------------------------------------------------------------
+ ---  Drive unused bus elements  ---------------------------------------
+ -----------------------------------------------------------------------
 
+  nam1 : for i in (maxahbs+1) to NAHBMST-1 generate
+    ahbmo(i) <= ahbm_none;
+  end generate;
 end;
 

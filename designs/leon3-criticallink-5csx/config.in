@@ -26,7 +26,6 @@ mainmenu_option next_comment
   comment 'Debug Link           '
   source lib/gaisler/uart/dcom.in
   source lib/gaisler/jtag/jtag.in
-  source lib/gaisler/net/edcl.in
 endmenu
 
 mainmenu_option next_comment
@@ -39,10 +38,16 @@ comment 'Peripherals             '
 #  endmenu
 
   mainmenu_option next_comment
-  comment 'On-chip RAM/ROM                 '
+  comment 'On-chip ROM/RAM                '
     source lib/gaisler/misc/ahbrom.in
     source lib/gaisler/misc/ahbram.in
   endmenu
+
+  mainmenu_option next_comment
+    comment 'AHB Status reg               '
+      source lib/gaisler/misc/ahbstat.in
+  endmenu
+
 
 #  mainmenu_option next_comment
 #  comment 'Ethernet             '

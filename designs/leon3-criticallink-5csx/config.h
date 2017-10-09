@@ -250,12 +250,16 @@
  * Peripherals             
  */
 /*
- * On-chip RAM/ROM                 
+ * On-chip ROM/RAM                
  */
 #define CONFIG_AHBROM_ENABLE 1
 #define CONFIG_AHBROM_START 000
 #undef  CONFIG_AHBROM_PIPE
 #undef  CONFIG_AHBRAM_ENABLE
+/*
+ * AHB Status reg               
+ */
+#undef  CONFIG_AHBSTAT_ENABLE
 /*
  * UARTs, timers and irq control         
  */
