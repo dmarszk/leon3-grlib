@@ -766,7 +766,7 @@ begin
   ddr3if0: entity work.ddr3if
     generic map (
       hindex => hsi_ddr3,
-      haddr => 16#400#, hmask => 16#E00#
+      haddr => 16#400#, hmask => 16#F00#
     ) port map (
       pll_ref_clk => CLK2DDR,
       global_reset_n => sys_rst_n,

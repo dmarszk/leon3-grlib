@@ -35,7 +35,7 @@ package config is
   constant CFG_NOTAG : integer := 0;
   constant CFG_NWP : integer := (4);
   constant CFG_PWD : integer := 1*2;
-  constant CFG_FPU : integer := 0 + 16*0 + 32*0;
+  constant CFG_FPU : integer := (1+0 + 3) + 16*0 + 32*0;
   constant CFG_GRFPUSH : integer := 0;
   constant CFG_ICEN : integer := 1;
   constant CFG_ISETS : integer := 2;

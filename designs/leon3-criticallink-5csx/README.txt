@@ -74,6 +74,8 @@ HPS-FPGA control signals:
   To set the bus reset - write value 0x1 to the control register.
   To release the CPU reset - write value 0x2 to the control register.
 
+	Example: peekpoke -b 0xFF706010 w.l 0x0 0x2
+
 HPS-FPGA bridge:
   The access to the LEON peripherals from HPS is done through AXI2AHB
   bridge mapped in HPS under 0xC0000000 - 0xFBFFFFFF address space,
@@ -110,6 +112,14 @@ in the Quartus II gui use "make quartus-launch".
 
 Use "make quartus-prog-fpga" to program the FPGA. Make sure that the JTAG CHAIN SW
 on the board is set to "00", otherwise the programming will fail.
+
+
+-----------
+Hello World
+-----------
+sparc-elf-gcc -Wall -msoft-float hello_world.c -o hello_world.exe
+
+
 
 -----------
 Debugging
@@ -184,25 +194,19 @@ grmon2> info sys
             8-bit scalar, 2 * 32-bit timers, divisor 50
 
 
-grmon2> load ~/dhry.exe; verify ~/dhry.exe; run
-  40000000 .text                     56.8kB /  56.8kB   [===============>] 100%
-  4000E330 .data                      2.7kB /   2.7kB   [===============>] 100%
-  Total size: 59.50kB (2.75Mbit/s)
+grmon2> load hello_world.exe; verify hello_world.exe; run
+  40000000 .text                     23.7kB /  23.7kB   [===============>] 100%
+  40005ED0 .data                      2.7kB /   2.7kB   [===============>] 100%
+  Total size: 26.38kB (107.10kbit/s)
   Entry point 0x40000000
-  Image ~/dhry.exe loaded
-  40000000 .text                     56.8kB /  56.8kB   [===============>] 100%
-  4000E330 .data                      2.7kB /   2.7kB   [===============>] 100%
-  Total size: 59.50kB (107.74kbit/s)
+  Image /home/user/leon/grlib-repo/designs/leon3-criticallink-5csx/hello_world.exe loaded
+  40000000 .text                     23.7kB /  23.7kB   [===============>] 100%
+  40005ED0 .data                      2.7kB /   2.7kB   [===============>] 100%
+  Total size: 26.38kB (53.78kbit/s)
   Entry point 0x40000000
-  Image of ~/dhry.exe verified without errors
-Execution starts, 400000 runs through Dhrystone
-Microseconds for one run through Dhrystone:    6.4
-Dhrystones per Second:                      156862.8
-
-Dhrystones MIPS      :                        89.3
-
-
+  Image of /home/user/leon/grlib-repo/designs/leon3-criticallink-5csx/hello_world.exe verified without errors
   Program exited normally.
+
 
 
 
