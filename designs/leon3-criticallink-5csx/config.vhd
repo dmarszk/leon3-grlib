@@ -136,6 +136,7 @@ package config is
   constant CFG_HPS2FPGA : integer := 1;
   constant CFG_FPGA2HPS : integer := 1;
   constant CFG_HPS_RESET : integer := 0;
+  constant CFG_BRIDGE_ENDIAN_SWAP : integer := 1;
 -- GRLIB debugging
   constant CFG_DUART : integer := 1;
 end;

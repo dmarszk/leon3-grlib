@@ -28,6 +28,7 @@ library grlib;
 use grlib.amba.all;
 use grlib.stdlib.all;
 use grlib.devices.all;
+use work.config.all;
 
 Entity axi2ahb is
 	generic(
@@ -258,8 +259,15 @@ begin
 				end if;
 
 			when r_data_fifo =>
-				vx.rdata := h.rfifo(x.rfifo_r_ptr);
-				vx.rvalid := '1';
+        if CFG_BRIDGE_ENDIAN_SWAP = 1 then
+          vx.rdata := h.rfifo(x.rfifo_r_ptr)(7 downto 0)
+            & h.rfifo(x.rfifo_r_ptr)(15 downto 8)
+            & h.rfifo(x.rfifo_r_ptr)(23 downto 16)
+            & h.rfifo(x.rfifo_r_ptr)(31 downto 24);
+				else
+          vx.rdata := h.rfifo(x.rfifo_r_ptr);
+				end if;
+        vx.rvalid := '1';
 				vx.rfifo_r_ptr := x.rfifo_r_ptr;
 			--	if x.rfifo_r_ptr = conv_integer(x.arlen) then
 				if x.rfifo_r_ptr = h.rfifo_w_ptr then
@@ -515,7 +523,15 @@ begin
 	ahbo.hburst		<= h.hburst;
 	ahbo.hbusreq	<= h.hbusreq;
 	ahbo.hwrite		<= h.hwrite;
-	ahbo.hwdata		<= h.hwdata;
+  writeendianswap : if CFG_BRIDGE_ENDIAN_SWAP = 1 generate
+    ahbo.hwdata		<= h.hwdata(7 downto 0)
+      & h.hwdata(15 downto 8)
+      & h.hwdata(23 downto 16)
+      & h.hwdata(31 downto 24);
+  end generate;
+  no_writeendianswap : if CFG_BRIDGE_ENDIAN_SWAP = 0 generate
+    ahbo.hwdata		<= h.hwdata;
+  end generate;
 	ahbo.hlock		<= h.hlock;
 	ahbo.hsize		<= h.hsize;
 

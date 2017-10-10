@@ -287,6 +287,7 @@
  */
 #define CONFIG_HPS2FPGA 1
 #define CONFIG_FPGA2HPS 1
+#define CONFIG_BRIDGE_ENDIAN_SWAP 1
 #undef  CONFIG_HPS_RESET
 /*
  * VHDL Debugging        

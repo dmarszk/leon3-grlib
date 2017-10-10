@@ -3879,7 +3879,8 @@ proc menu17 {w title} {
 
 	bool $w.config.f 17 0 "HPS2FPGA bridge                    " CONFIG_HPS2FPGA
 	bool $w.config.f 17 1 "FPGA2HPS bridge	                   " CONFIG_FPGA2HPS
-	bool $w.config.f 17 2 "HPS reset resets LEON3             " CONFIG_HPS_RESET
+	bool $w.config.f 17 2 "Endian swap on bridges             " CONFIG_BRIDGE_ENDIAN_SWAP
+	bool $w.config.f 17 3 "HPS reset resets LEON3             " CONFIG_HPS_RESET
 
 
 
@@ -4356,6 +4357,7 @@ set CONFIG_GRGPIO_WIDTH 8
 set CONFIG_GRGPIO_IMASK 0000
 set CONFIG_HPS2FPGA 0
 set CONFIG_FPGA2HPS 0
+set CONFIG_BRIDGE_ENDIAN_SWAP 0
 set CONFIG_HPS_RESET 0
 set CONFIG_DEBUG_UART 0
 set CONFIG_SYN_ARTISAN 4
@@ -5040,6 +5042,8 @@ proc writeconfig {file1 file2} {
 	write_tristate $cfg $autocfg CONFIG_HPS2FPGA $CONFIG_HPS2FPGA [list $notmod] 2
 	global CONFIG_FPGA2HPS
 	write_tristate $cfg $autocfg CONFIG_FPGA2HPS $CONFIG_FPGA2HPS [list $notmod] 2
+	global CONFIG_BRIDGE_ENDIAN_SWAP
+	write_tristate $cfg $autocfg CONFIG_BRIDGE_ENDIAN_SWAP $CONFIG_BRIDGE_ENDIAN_SWAP [list $notmod] 2
 	global CONFIG_HPS_RESET
 	write_tristate $cfg $autocfg CONFIG_HPS_RESET $CONFIG_HPS_RESET [list $notmod] 2
 	write_comment $cfg $autocfg "VHDL Debugging        "

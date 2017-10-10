@@ -7,4 +7,7 @@
 #ifndef CONFIG_HPS_RESET
 #define CONFIG_HPS_RESET 0
 #endif
+#ifndef CONFIG_BRIDGE_ENDIAN_SWAP
+#define CONFIG_BRIDGE_ENDIAN_SWAP 0
+#endif
 

@@ -26,6 +26,7 @@ library grlib;
 use grlib.amba.all;
 use grlib.stdlib.all;
 use grlib.devices.all;
+use work.config.all;
 
 entity ahb2axi is
 	generic(
@@ -222,7 +223,14 @@ begin
       v.m_axi_awvalid := '1'; 
       v.m_axi_awaddr := r.haddr(addrsize-1 downto 2) & "00";
       v.m_axi_wstrb := wstrb; 
-      v.hwdata := ahbsi.hwdata;
+      if CFG_BRIDGE_ENDIAN_SWAP = 1 then
+        v.hwdata := ahbsi.hwdata(7 downto 0)
+          & ahbsi.hwdata(15 downto 8)
+          & ahbsi.hwdata(23 downto 16)
+          & ahbsi.hwdata(31 downto 24);
+      else
+        v.hwdata := ahbsi.hwdata;
+      end if;
       v.bstate := write2;
     end case;
 
@@ -280,7 +288,15 @@ begin
 
   ahbso.hready   <= r.hready;
   ahbso.hresp    <= "00"; --r.hresp;
-  ahbso.hrdata   <= r.m_axi_rdata;
+  readendianswap : if CFG_BRIDGE_ENDIAN_SWAP = 1 generate
+    ahbso.hrdata   <= r.m_axi_rdata(7 downto 0)
+      & r.m_axi_rdata(15 downto 8)
+      & r.m_axi_rdata(23 downto 16)
+      & r.m_axi_rdata(31 downto 24);
+  end generate;
+  no_readendianswap : if CFG_BRIDGE_ENDIAN_SWAP = 0 generate
+    ahbso.hrdata   <= r.m_axi_rdata;
+  end generate;
 
   ahbso.hconfig  <= hconfig;
   ahbso.hirq     <= (others => '0');
