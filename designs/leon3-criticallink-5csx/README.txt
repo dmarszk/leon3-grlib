@@ -113,18 +113,18 @@ FPGA-HPS bridge:
   bridge (example: 0xCF700000 translates to 0xFF700000). This can be
   changed by the user.
 
-
 Interrupts:
   2 - APB UART
+	7 - AHB status register (disabled in the default config)
   8 - Timer
 
------------
+	GRGPIO can generate signal on any of the IRQ line.
+
 Simulation
 -----------
 The standard GRLIB flow with "make vsim" and then "vsim testbench" can be used to
 simulate the design. The simulation uses a simplified DDR3 controller.
 
------------
 Programming
 -----------
 To synthesize the design (requires Quartus II 16.1), first build the megafunctions
@@ -135,14 +135,36 @@ Use "make quartus-prog-fpga" to program the FPGA. Make sure that the JTAG CHAIN 
 on the board is set to "00", otherwise the programming will fail.
 
 
------------
-Hello World
------------
-sparc-elf-gcc -Wall -msoft-float hello_world.c -o hello_world.exe
+HPS software loader
+--------------------
+The project includes an application allowing to boot software on LEON from linux running on HPS.
+Compile it using:
+* arm-linux-gnueabihf-gcc leon-loader.c -o leon-loader
+Then copy leon-loader to the target board filesystem.
 
 
+Booting Hello World on LEON from HPS
+------------------------------------
+Compile Hello World using:
+* (LEON with FPU) sparc-elf-gcc -Wall hello_world.c -o hello_world.exe
+* (LEON without FPU) sparc-elf-gcc -Wall -msoft-float hello_world.c -o hello_world.exe
 
------------
+Copy hello_world.exe to the target board and invoke there:
+* leon-loader -f leon_software.exe -br
+It causes loader to reset LEON bus, put CPU into reset,
+load the software through shared memory and release CPU reset.
+
+
+Known bugs, TODO
+----------------
+Sometimes LEON stops either immediately or couple of seconds after deasserting the reset.
+It might be an indication of a timing or a race condition problem in the design.
+
+While H2F GPO pins can trigger interrupt on LEON side using GRGPIO functionality.
+F2H GPI pins are not capable of triggering interrupt on HPS side.
+This can be improved by hooking F2H GPI lines to dedicated HPS_F2H IRQ lane.
+
+
 Debugging
 -----------
 Debugging can be done over the debug UART interface (JTAG currently does not work properly).
