@@ -16,6 +16,7 @@ int main()
 {
 	int i, j;
 	*(unsigned long*)(APB_UART0_SCALER) = UART0_SCALER_VALUE;
+	*(unsigned long*)(APB_UART0_CTRL) = 0x80000003; // Enable FIFO, TX and RX
 	for(i = 0; i < 10; ++i)
 	{
 		printf("Hello World\n");
