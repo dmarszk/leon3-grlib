@@ -172,10 +172,10 @@ component leon3mp is
       HSMC1_D1          : out std_logic;
       HSMC1_D2          : out std_logic;
       HSMC1_D3          : out std_logic;
-      HSMC1_TX0         : out std_logic;
-      HSMC1_TX1         : out std_logic;
-      HSMC1_TX2         : out std_logic;
-      HSMC1_TX3         : out std_logic;
+      HSMC1_TX0         : inout std_logic;
+      HSMC1_TX1         : inout std_logic;
+      HSMC1_TX2         : inout std_logic;
+      HSMC1_TX3         : inout std_logic;
       HSMC1_TX4         : out std_logic;
       HSMC1_TX5         : out std_logic;
       HSMC1_TX6         : out std_logic;
@@ -189,10 +189,10 @@ component leon3mp is
       HSMC1_TX14        : out std_logic;
       HSMC1_TX15        : out std_logic;
       HSMC1_TX16        : out std_logic;
-      HSMC1_TX0_N       : out std_logic;
-      HSMC1_TX1_N       : out std_logic;
-      HSMC1_TX2_N       : out std_logic;
-      HSMC1_TX3_N       : out std_logic;
+      HSMC1_TX0_N       : inout std_logic;
+      HSMC1_TX1_N       : inout std_logic;
+      HSMC1_TX2_N       : inout std_logic;
+      HSMC1_TX3_N       : inout std_logic;
       HSMC1_TX4_N       : out std_logic;
       HSMC1_TX5_N       : out std_logic;
       HSMC1_TX6_N       : out std_logic;
@@ -216,7 +216,7 @@ component leon3mp is
       HSMC1_RX7         : out std_logic;
       HSMC1_RX8         : out std_logic;
       HSMC1_RX9         : out std_logic;
-      HSMC1_RX10        : out std_logic;
+      HSMC1_RX10        : in std_logic;
       HSMC1_RX11        : out std_logic;
       HSMC1_RX12        : out std_logic;
       HSMC1_RX13        : out std_logic;
