@@ -32,9 +32,9 @@ use ieee.std_logic_1164.all;
 library grlib;
 
 Entity hps2fpga_mapper is
-	port(
-		axi_addr	  : in  std_logic_vector(29 downto 0);
-		ahb_addr 		: out  std_logic_vector(31 downto 0)
+  port(
+    axi_addr    : in  std_logic_vector(29 downto 0);
+    ahb_addr    : out  std_logic_vector(31 downto 0)
   );
 end;
 
@@ -42,12 +42,10 @@ architecture rtl of hps2fpga_mapper is
 
 begin
 
-	comb: process(axi_addr)
+  comb: process(axi_addr)
 
-	begin
-		-- WDATA muxing
+  begin
     case axi_addr(29 downto 28) is
-
       when "00" | "01" =>
         -- 0xC0000000 -> 0x40000000 (RAM)
         -- 0xD0000000 -> 0x50000000 (RAM)
@@ -60,7 +58,7 @@ begin
         ahb_addr <= (others => 'X');
     end case;
 
-	end process;
+  end process;
 
 end;
 

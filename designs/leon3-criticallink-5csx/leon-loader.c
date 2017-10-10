@@ -522,7 +522,7 @@ int main(int argc, char** argv)
       printf("Done.\n");
     }
   }
-  
+
   if(input_file != NULL)
   {
     printf("===== Loading Software =====\n");
