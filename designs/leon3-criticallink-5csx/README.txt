@@ -146,6 +146,7 @@ sparc-elf-gcc -Wall -msoft-float hello_world.c -o hello_world.exe
 Debugging
 -----------
 Debugging can be done over the debug UART interface (JTAG currently does not work properly).
+CPU reset has to be released (HPS2FPGA GPO[1] set to high) before running software on the core.
 
 user@OSMitySOM:~$ grmon -uart /dev/ttyUSB2
 
