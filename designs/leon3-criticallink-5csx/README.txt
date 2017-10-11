@@ -115,7 +115,7 @@ FPGA-HPS bridge:
 
 Interrupts:
   2 - APB UART
-	7 - AHB status register (disabled in the default config)
+  7 - AHB status register (disabled in the default config)
   8 - Timer
 
 	GRGPIO can generate signal on any of the IRQ line.
