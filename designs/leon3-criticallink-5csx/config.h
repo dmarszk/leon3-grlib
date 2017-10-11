@@ -117,13 +117,7 @@
 /*
  * Floating-point unit
  */
-#define CONFIG_FPU_ENABLE 1
-#define CONFIG_FPU_GRFPU 1
-#undef  CONFIG_FPU_GRFPULITE
-#define CONFIG_FPU_GRFPU_INFMUL 1
-#undef  CONFIG_FPU_GRFPU_DWMUL
-#undef  CONFIG_FPU_GRFPU_MODGEN
-#undef  CONFIG_FPU_GRFPU_TECHSPEC
+#undef  CONFIG_FPU_ENABLE
 /*
  * Cache system
  */
