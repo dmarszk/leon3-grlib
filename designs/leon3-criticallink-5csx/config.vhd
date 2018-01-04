@@ -74,7 +74,7 @@ package config is
   constant CFG_CACHE_FT_EN : integer := 0;
   constant CFG_CACHE_ERRINJ : integer := 0;
   constant CFG_LEON3_NETLIST: integer := 0;
-  constant CFG_DISAS : integer := 1 + 0;
+  constant CFG_DISAS : integer := 0 + 0;
   constant CFG_PCLOW : integer := 2;
   constant CFG_STAT_ENABLE : integer := 1;
   constant CFG_STAT_CNT : integer := (4);
@@ -94,7 +94,7 @@ package config is
   constant CFG_AHB_MON : integer := 0;
   constant CFG_AHB_MONERR : integer := 0;
   constant CFG_AHB_MONWAR : integer := 0;
-  constant CFG_AHB_DTRACE : integer := 1;
+  constant CFG_AHB_DTRACE : integer := 0;
 -- DSU UART
   constant CFG_AHB_UART : integer := 1;
 -- JTAG based DSU interface
@@ -113,6 +113,13 @@ package config is
 -- AHB status register
   constant CFG_AHBSTAT : integer := 0;
   constant CFG_AHBSTATN : integer := 1;
+-- CAN 2.0 interface
+  constant CFG_CAN : integer := 1;
+  constant CFG_CANIO : integer := 16#C00#;
+  constant CFG_CANIRQ : integer := (13);
+  constant CFG_CANLOOP : integer := 0;
+  constant CFG_CAN_SYNCRST : integer := 0;
+  constant CFG_CANFT : integer := 0;
 -- UART 1
   constant CFG_UART1_ENABLE : integer := 1;
   constant CFG_UART1_FIFO : integer := 4;

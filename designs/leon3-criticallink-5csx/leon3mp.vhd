@@ -31,13 +31,14 @@ library grlib, techmap;
 use grlib.amba.all;
 use grlib.devices.all;
 use grlib.stdlib.all;
---library techmap;
+library techmap;
 use techmap.gencomp.all;
 library gaisler;
 use gaisler.memctrl.all;
 use gaisler.leon3.all;
 use gaisler.uart.all;
 use gaisler.misc.all;
+use gaisler.can.all;
 use gaisler.jtag.all;
 use gaisler.spi.all;
 use gaisler.i2c.all;
@@ -131,9 +132,9 @@ entity leon3mp is
       -- CAN0
       B7A_CAN0_RX       : in    std_logic                     := 'X';
       B7A_CAN0_TX       : out   std_logic;
-      -- CAN1
-      B7A_CAN1_RX       : in    std_logic                     := 'X';
-      B7A_CAN1_TX       : out   std_logic;
+      -- CAN1, plugged to an FPGA CAN controller
+      B7A_CAN1_RX       : inout    std_logic;
+      B7A_CAN1_TX       : inout   std_logic;
       -- I2C1
       I2C1_SCL          : inout std_logic;
       I2C1_SDA          : inout std_logic;
@@ -303,6 +304,8 @@ architecture rtl of leon3mp is
   signal gpioi : gpio_in_type;
   signal gpioo : gpio_out_type;
 
+  signal can_lrx, can_ltx : std_ulogic;
+
   signal sri: memory_in_type;
   signal sro: memory_out_type;
   signal del_addr: std_logic_vector(26 downto 1);
@@ -435,8 +438,6 @@ architecture rtl of leon3mp is
       hps_io_hps_io_i2c1_inst_SCL      : inout std_logic                     := 'X';             -- hps_io_i2c1_inst_SCL
       hps_io_hps_io_can0_inst_RX       : in    std_logic                     := 'X';             -- hps_io_can0_inst_RX
       hps_io_hps_io_can0_inst_TX       : out   std_logic;                                        -- hps_io_can0_inst_TX
-      hps_io_hps_io_can1_inst_RX       : in    std_logic                     := 'X';             -- hps_io_can1_inst_RX
-      hps_io_hps_io_can1_inst_TX       : out   std_logic;                                        -- hps_io_can1_inst_TX
       hps_io_hps_io_gpio_inst_GPIO00   : inout std_logic                     := 'X';             -- hps_io_gpio_inst_GPIO00
       hps_io_hps_io_gpio_inst_GPIO09   : inout std_logic                     := 'X';             -- hps_io_gpio_inst_GPIO09
       hps_io_hps_io_gpio_inst_GPIO28   : inout std_logic                     := 'X';             -- hps_io_gpio_inst_GPIO28
@@ -446,6 +447,8 @@ architecture rtl of leon3mp is
       hps_io_hps_io_gpio_inst_LOANIO48 : inout std_logic                     := 'X';             -- hps_io_gpio_inst_LOANIO48
       hps_io_hps_io_gpio_inst_LOANIO49 : inout std_logic                     := 'X';             -- hps_io_gpio_inst_LOANIO49
       hps_io_hps_io_gpio_inst_LOANIO50 : inout std_logic                     := 'X';             -- hps_io_gpio_inst_LOANIO50
+      hps_io_hps_io_gpio_inst_LOANIO59 : inout std_logic                     := 'X';             -- hps_io_gpio_inst_LOANIO59
+      hps_io_hps_io_gpio_inst_LOANIO60 : inout std_logic                     := 'X';             -- hps_io_gpio_inst_LOANIO60
       hps_loan_io_in                   : out   std_logic_vector(66 downto 0);                    -- in
       hps_loan_io_out                  : in    std_logic_vector(66 downto 0) := (others => 'X'); -- out
       hps_loan_io_oe                   : in    std_logic_vector(66 downto 0) := (others => 'X'); -- oe
@@ -552,6 +555,9 @@ architecture rtl of leon3mp is
   signal sw_fpga : std_logic_vector(3 downto 1);
   signal loaner_out, loaner_oe, loaner_in : std_logic_vector(66 downto 0);
 
+  -- Used to connect HPS_CAN1 (Set1) pins to CAN controller in FPGA
+  signal fpga_can_rx, fpga_can_tx : std_logic;
+
   -- Internal signal allowing HPS to reset LEON bus.
   -- Also GPO[8:11] and GPI[12:15] implement a generic
   -- signaling mechanism between HPS and LEON
@@ -572,7 +578,7 @@ begin
   -- All H2F GPO signals are initialized with 0
   -- Bus does not start in reset mode, so all peripherals are accessible through H2F bridge.
   -- CPU starts in reset mode, so it does not execute any instructions
-  -- until HPS initializes the program in RAM.
+  -- until HPS initializes the program in RAM and deasserts the reset.
   h2f_leon_sys_reset_n <= not hps_h2f_gpo(0);
   h2f_leon_cpu_reset_n <= hps_h2f_gpo(1);
   HSMC1_RX6_N <= dbguarto.txd;
@@ -584,13 +590,15 @@ begin
   sw_fpga(1) <= loaner_in(37);
   sw_fpga(2) <= loaner_in(40);
   sw_fpga(3) <= loaner_in(41);
+  fpga_can_rx <= loaner_in(59);
+
   --led_fpga(1) <= indicator_counter(25);
   --led_fpga(2) <= indicator_counter(25) and sw1_fpga;
   --led_fpga(3) <= sw1_fpga;
   HSMC1_TX15 <= indicator_counter(25);
   HSMC1_TX14 <= indicator_counter(25) and HSMC1_TX14_N;
-  loaner_oe <= (48|49|50 => '1', 37|40|41 => '0', others => 'X');
-  loaner_out <= (48 => led_fpga(3), 49 => led_fpga(2), 50 => led_fpga(1), others => 'X');
+  loaner_oe <= (48|49|50|60 => '1', 37|40|41|59 => '0', others => 'X');
+  loaner_out <= (48 => led_fpga(3), 49 => led_fpga(2), 50 => led_fpga(1), 60 => fpga_can_tx, others => 'X');
 
 
   vcc <= '1';
@@ -781,7 +789,25 @@ begin
       port map(rstn, clkm, gnd, gnd, gnd, open, ahbmi, ahbmo(CFG_LEON3*CFG_NCPU),
                open, open, open, open, open, open, open, gnd);
   end generate;
+  -----------------------------------------------------------------------
+  ---  CAN --------------------------------------------------------------
+  -----------------------------------------------------------------------
+  can0 : if CFG_CAN = 1 generate
+   can0 : can_oc generic map (slvndx => 7, ioaddr => CFG_CANIO,
+      iomask => 16#FFF#, irq => CFG_CANIRQ, memtech => memtech)
+      port map (rstn, clkm, ahbsi, ahbso(7), can_lrx, can_ltx );
+  end generate;
+  ncan : if CFG_CAN = 0 generate ahbso(7) <= ahbs_none; end generate;
 
+  can_loopback : if CFG_CANLOOP = 1 generate
+   can_lrx <= can_ltx;
+   fpga_can_tx <= '0';
+  end generate;
+
+  can_pads : if CFG_CANLOOP = 0 generate
+    can_lrx <= fpga_can_rx;
+    fpga_can_tx <= can_ltx;
+  end generate;
   -----------------------------------------------------------------------------
   -- Memory controllers
   -----------------------------------------------------------------------------
@@ -1022,9 +1048,7 @@ dev_hps_inst : component dev_hps
       hps_io_hps_io_i2c1_inst_SDA       => I2C1_SDA, -- hps_io_i2c1_inst_SDA
       hps_io_hps_io_i2c1_inst_SCL       => I2C1_SCL, -- hps_io_i2c1_inst_SCL
       hps_io_hps_io_can0_inst_RX        => B7A_CAN0_RX, --       .hps_io_can0_inst_RX
-      hps_io_hps_io_can0_inst_TX        => B7a_CAN0_TX, --       .hps_io_can0_inst_TX
-      hps_io_hps_io_can1_inst_RX        => B7A_CAN1_RX, --       .hps_io_can1_inst_RX
-      hps_io_hps_io_can1_inst_TX        => B7A_CAN1_TX, --       .hps_io_can1_inst_TX
+      hps_io_hps_io_can0_inst_TX        => B7A_CAN0_TX, --       .hps_io_can0_inst_TX
       hps_io_hps_io_gpio_inst_GPIO00    => USB1_ULPI_CS, --       .hps_io_gpio_inst_GPIO00
       hps_io_hps_io_gpio_inst_GPIO09    => USB1_ULPI_RESET_N, --       .hps_io_gpio_inst_GPIO09
       hps_io_hps_io_gpio_inst_GPIO28    => RGMII1_RESETn, -- hps_io_gpio_inst_GPIO28
@@ -1034,6 +1058,8 @@ dev_hps_inst : component dev_hps
       hps_io_hps_io_gpio_inst_LOANIO48    => LED3, -- hps_io_gpio_inst_LOANIO48
       hps_io_hps_io_gpio_inst_LOANIO49    => LED2, -- hps_io_gpio_inst_LOANIO49
       hps_io_hps_io_gpio_inst_LOANIO50    => LED1, -- hps_io_gpio_inst_LOANIO50
+      hps_io_hps_io_gpio_inst_LOANIO59    => B7A_CAN1_RX, --     hps_io_gpio_inst_LOANIO59
+      hps_io_hps_io_gpio_inst_LOANIO60    => B7A_CAN1_TX, --     hps_io_gpio_inst_LOANIO60
       hps_loan_io_in                   => loaner_in,                   --          hps_loan_io.in
       hps_loan_io_out                  => loaner_out,                  --                     .out
       hps_loan_io_oe                   => loaner_oe,                   --                     .oe

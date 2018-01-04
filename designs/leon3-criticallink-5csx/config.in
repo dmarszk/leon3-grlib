@@ -55,10 +55,10 @@ comment 'Peripherals             '
 #    source lib/gaisler/greth/greth2.in
 #  endmenu
 
-#  mainmenu_option next_comment
-#  comment 'CAN                     '
-#    source lib/gaisler/can/can_oc.in
-#  endmenu
+  mainmenu_option next_comment
+  comment 'CAN                     '
+    source lib/gaisler/can/can_oc.in
+  endmenu
 
   mainmenu_option next_comment
   comment 'UARTs, timers and irq control         '

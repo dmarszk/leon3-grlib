@@ -88,8 +88,6 @@ entity dev_hps is
       hps_io_hps_io_i2c1_inst_SCL      : inout std_logic                     := 'X';             -- hps_io_i2c1_inst_SCL
       hps_io_hps_io_can0_inst_RX       : in    std_logic                     := 'X';             -- hps_io_can0_inst_RX
       hps_io_hps_io_can0_inst_TX       : out   std_logic;                                        -- hps_io_can0_inst_TX
-      hps_io_hps_io_can1_inst_RX       : in    std_logic                     := 'X';             -- hps_io_can1_inst_RX
-      hps_io_hps_io_can1_inst_TX       : out   std_logic;                                        -- hps_io_can1_inst_TX
       hps_io_hps_io_gpio_inst_GPIO00   : inout std_logic                     := 'X';             -- hps_io_gpio_inst_GPIO00
       hps_io_hps_io_gpio_inst_GPIO09   : inout std_logic                     := 'X';             -- hps_io_gpio_inst_GPIO09
       hps_io_hps_io_gpio_inst_GPIO28   : inout std_logic                     := 'X';             -- hps_io_gpio_inst_GPIO28
@@ -99,6 +97,8 @@ entity dev_hps is
       hps_io_hps_io_gpio_inst_LOANIO48 : inout std_logic                     := 'X';             -- hps_io_gpio_inst_LOANIO48
       hps_io_hps_io_gpio_inst_LOANIO49 : inout std_logic                     := 'X';             -- hps_io_gpio_inst_LOANIO49
       hps_io_hps_io_gpio_inst_LOANIO50 : inout std_logic                     := 'X';             -- hps_io_gpio_inst_LOANIO50
+      hps_io_hps_io_gpio_inst_LOANIO59 : inout std_logic                     := 'X';             -- hps_io_gpio_inst_LOANIO59
+      hps_io_hps_io_gpio_inst_LOANIO60 : inout std_logic                     := 'X';             -- hps_io_gpio_inst_LOANIO60
       hps_loan_io_in                   : out   std_logic_vector(66 downto 0);                    -- in
       hps_loan_io_out                  : in    std_logic_vector(66 downto 0) := (others => 'X'); -- out
       hps_loan_io_oe                   : in    std_logic_vector(66 downto 0) := (others => 'X'); -- oe
@@ -220,7 +220,6 @@ begin
   hps_io_hps_io_usb1_inst_STP      <= 'X';
   hps_io_hps_io_uart0_inst_TX      <= 'X';
   hps_io_hps_io_can0_inst_TX       <= 'X';
-  hps_io_hps_io_can1_inst_TX       <= 'X';
   hps_h2f_reset_reset_n            <= '1';
   hps_h2f_axi_master_awid          <= (others => 'X');
   hps_h2f_axi_master_awaddr        <= (others => 'X');
@@ -259,6 +258,8 @@ begin
   hps_f2h_axi_slave_rlast          <= 'X';
   hps_f2h_axi_slave_rvalid         <= 'X';
   hps_h2f_gp_gp_out                <= (others => '0');
+  -- deassert CPU reset
+  hps_h2f_gp_gp_out(1) <= '1';
       
   clk_100mhz_gen <= not clk_100mhz_gen after 5 ns;
   clk_50mhz_gen <= not clk_50mhz_gen after 10 ns;
@@ -273,6 +274,8 @@ begin
     48 => hps_io_hps_io_gpio_inst_LOANIO48,
     49 => hps_io_hps_io_gpio_inst_LOANIO49,
     50 => hps_io_hps_io_gpio_inst_LOANIO50,
+    59 => hps_io_hps_io_gpio_inst_LOANIO59,
+    60 => hps_io_hps_io_gpio_inst_LOANIO60,
     others => 'X'
   );
   
@@ -288,6 +291,8 @@ begin
   hps_io_hps_io_gpio_inst_LOANIO48 <= hps_loan_io_out(48) when hps_loan_io_oe(48) = '1' else 'Z';
   hps_io_hps_io_gpio_inst_LOANIO49 <= hps_loan_io_out(49) when hps_loan_io_oe(49) = '1' else 'Z';
   hps_io_hps_io_gpio_inst_LOANIO50 <= hps_loan_io_out(50) when hps_loan_io_oe(50) = '1' else 'Z';
+  hps_io_hps_io_gpio_inst_LOANIO59 <= hps_loan_io_out(59) when hps_loan_io_oe(59) = '1' else 'Z';
+  hps_io_hps_io_gpio_inst_LOANIO60 <= hps_loan_io_out(60) when hps_loan_io_oe(60) = '1' else 'Z';
   
   
 end;

@@ -140,8 +140,8 @@ component leon3mp is
       B7A_CAN0_RX       : in    std_logic;
       B7A_CAN0_TX       : out   std_logic;
       -- CAN1
-      B7A_CAN1_RX       : in    std_logic;
-      B7A_CAN1_TX       : out   std_logic;
+      B7A_CAN1_RX       : inout    std_logic;
+      B7A_CAN1_TX       : inout   std_logic;
       -- I2C1
       I2C1_SCL          : inout std_logic;
       I2C1_SDA          : inout std_logic;
@@ -765,96 +765,96 @@ begin
 --    txa(dsutx, 16#90#, 16#00#, 16#00#, 16#20#, txp);
 --    txa(dsutx, 16#00#, 16#00#, 16#06#, 16#fc#, txp);
 
-    -- W 0x0000002F @ DSU CPU0 CTRL
-    -- BZ, BS, BW, BE, TE
-    txc(dsutx, 16#c0#, txp);
-    txa(dsutx, 16#90#, 16#00#, 16#00#, 16#00#, txp);
-    txa(dsutx, 16#00#, 16#00#, 16#00#, 16#2f#, txp);
+    -- -- W 0x0000002F @ DSU CPU0 CTRL
+    -- -- BZ, BS, BW, BE, TE
+    -- txc(dsutx, 16#c0#, txp);
+    -- txa(dsutx, 16#90#, 16#00#, 16#00#, 16#00#, txp);
+    -- txa(dsutx, 16#00#, 16#00#, 16#00#, 16#2f#, txp);
     
-    -- W 0x0000006F @ DSU CPU1 CTRL
-    -- DM(???), BZ, BS, BW, BE, TE
-    txc(dsutx, 16#c0#, txp);
-    txa(dsutx, 16#91#, 16#00#, 16#00#, 16#00#, txp);
-    txa(dsutx, 16#00#, 16#00#, 16#00#, 16#6f#, txp);
+    -- -- W 0x0000006F @ DSU CPU1 CTRL
+    -- -- DM(???), BZ, BS, BW, BE, TE
+    -- txc(dsutx, 16#c0#, txp);
+    -- txa(dsutx, 16#91#, 16#00#, 16#00#, 16#00#, txp);
+    -- txa(dsutx, 16#00#, 16#00#, 16#00#, 16#6f#, txp);
     
-    -- W 0x00000000 @ DSU CPU0 IT CTRL0
-    -- No filter, ptr 0
-    txc(dsutx, 16#c0#, txp);
-    txa(dsutx, 16#90#, 16#11#, 16#00#, 16#00#, txp);
-    txa(dsutx, 16#00#, 16#00#, 16#00#, 16#00#, txp);
-    
-    
-    -- W 0x00022001 @ DSU CPU0 PSR
-    -- Some SPARCv8 flags
-    txc(dsutx, 16#c0#, txp);
-    txa(dsutx, 16#90#, 16#40#, 16#00#, 16#04#, txp);
-    txa(dsutx, 16#00#, 16#02#, 16#20#, 16#01#, txp);
+    -- -- W 0x00000000 @ DSU CPU0 IT CTRL0
+    -- -- No filter, ptr 0
+    -- txc(dsutx, 16#c0#, txp);
+    -- txa(dsutx, 16#90#, 16#11#, 16#00#, 16#00#, txp);
+    -- txa(dsutx, 16#00#, 16#00#, 16#00#, 16#00#, txp);
     
     
-    -- W 0x00000002 @ DSU Break and Single Step reg
-    -- Force CPU1 into debug mode and break
-    txc(dsutx, 16#c0#, txp);
-    txa(dsutx, 16#90#, 16#00#, 16#00#, 16#20#, txp);
-    txa(dsutx, 16#00#, 16#00#, 16#00#, 16#02#, txp);
-
-    -- W 0x0000000F @ DSU Break and Single Step reg
-    -- Force CPU0-CPU3 into debug mode and break
-    txc(dsutx, 16#c0#, txp);
-    txa(dsutx, 16#90#, 16#00#, 16#00#, 16#20#, txp);
-    txa(dsutx, 16#00#, 16#00#, 16#00#, 16#0f#, txp);
-
-    -- W 0x0000000F @ RAM @ 0x4310
-    -- Force CPU0-CPU3 into debug mode and break
-    txc(dsutx, 16#c0#, txp);
-    txa(dsutx, 16#40#, 16#00#, 16#43#, 16#10#, txp);
-    txa(dsutx, 16#00#, 16#00#, 16#00#, 16#0f#, txp);
-
-    
-    -- W 0x00000024 @ DSU CPU1 ASI
-    -- Set Address Space Identifier to 0x24 (??????)
-    txc(dsutx, 16#c0#, txp);
-    txa(dsutx, 16#91#, 16#40#, 16#00#, 16#24#, txp);
-    txa(dsutx, 16#00#, 16#00#, 16#00#, 16#24#, txp);
+    -- -- W 0x00022001 @ DSU CPU0 PSR
+    -- -- Some SPARCv8 flags
+    -- txc(dsutx, 16#c0#, txp);
+    -- txa(dsutx, 16#90#, 16#40#, 16#00#, 16#04#, txp);
+    -- txa(dsutx, 16#00#, 16#02#, 16#20#, 16#01#, txp);
     
     
-    -- W 0x00000003 @ DSU CPU1 ASI-mapped area offset 0x0
-    -- ??????
-    txc(dsutx, 16#c0#, txp);
-    txa(dsutx, 16#91#, 16#70#, 16#00#, 16#00#, txp);
-    txa(dsutx, 16#00#, 16#00#, 16#00#, 16#03#, txp);
+    -- -- W 0x00000002 @ DSU Break and Single Step reg
+    -- -- Force CPU1 into debug mode and break
+    -- txc(dsutx, 16#c0#, txp);
+    -- txa(dsutx, 16#90#, 16#00#, 16#00#, 16#20#, txp);
+    -- txa(dsutx, 16#00#, 16#00#, 16#00#, 16#02#, txp);
 
+    -- -- W 0x0000000F @ DSU Break and Single Step reg
+    -- -- Force CPU0-CPU3 into debug mode and break
+    -- txc(dsutx, 16#c0#, txp);
+    -- txa(dsutx, 16#90#, 16#00#, 16#00#, 16#20#, txp);
+    -- txa(dsutx, 16#00#, 16#00#, 16#00#, 16#0f#, txp);
 
-
-
-
-    -- W 0x0000FFFF @ DSU Break and Single Step reg
-    -- Force CPU0-CPU15 into debug mode and break
-    txc(dsutx, 16#c0#, txp);
-    txa(dsutx, 16#90#, 16#00#, 16#00#, 16#20#, txp);
-    txa(dsutx, 16#00#, 16#00#, 16#ff#, 16#ff#, txp);
+    -- -- W 0x0000000F @ RAM @ 0x4310
+    -- -- Force CPU0-CPU3 into debug mode and break
+    -- txc(dsutx, 16#c0#, txp);
+    -- txa(dsutx, 16#40#, 16#00#, 16#43#, 16#10#, txp);
+    -- txa(dsutx, 16#00#, 16#00#, 16#00#, 16#0f#, txp);
 
     
-    -- W 0x00000012 @ DSU CPU0 ASR18
-    -- 32 LSBs of MAC operation
-    txc(dsutx, 16#c0#, txp);
-    txa(dsutx, 16#90#, 16#40#, 16#00#, 16#48#, txp);
-    txa(dsutx, 16#00#, 16#00#, 16#00#, 16#12#, txp);
+    -- -- W 0x00000024 @ DSU CPU1 ASI
+    -- -- Set Address Space Identifier to 0x24 (??????)
+    -- txc(dsutx, 16#c0#, txp);
+    -- txa(dsutx, 16#91#, 16#40#, 16#00#, 16#24#, txp);
+    -- txa(dsutx, 16#00#, 16#00#, 16#00#, 16#24#, txp);
+    
+    
+    -- -- W 0x00000003 @ DSU CPU1 ASI-mapped area offset 0x0
+    -- -- ??????
+    -- txc(dsutx, 16#c0#, txp);
+    -- txa(dsutx, 16#91#, 16#70#, 16#00#, 16#00#, txp);
+    -- txa(dsutx, 16#00#, 16#00#, 16#00#, 16#03#, txp);
 
-    -- W 0x00001210 @ DSU CPU0 ASR24
-    -- Disabled HW breakpoint @ 0x1210
-    txc(dsutx, 16#c0#, txp);
-    txa(dsutx, 16#90#, 16#40#, 16#00#, 16#60#, txp);
-    txa(dsutx, 16#00#, 16#00#, 16#12#, 16#10#, txp);
 
-    -- R DSU CPU0 CTRL
-    txc(dsutx, 16#80#, txp);
-    txa(dsutx, 16#90#, 16#00#, 16#00#, 16#00#, txp);
-    rxi(dsurx, w32, txp, lresp);
 
-    -- R 33 x 32bit RAM @ 0x00000000
-    txc(dsutx, 16#a0#, txp);
-    txa(dsutx, 16#40#, 16#00#, 16#00#, 16#00#, txp);
-    rxi(dsurx, w32, txp, lresp);
+
+
+    -- -- W 0x0000FFFF @ DSU Break and Single Step reg
+    -- -- Force CPU0-CPU15 into debug mode and break
+    -- txc(dsutx, 16#c0#, txp);
+    -- txa(dsutx, 16#90#, 16#00#, 16#00#, 16#20#, txp);
+    -- txa(dsutx, 16#00#, 16#00#, 16#ff#, 16#ff#, txp);
+
+    
+    -- -- W 0x00000012 @ DSU CPU0 ASR18
+    -- -- 32 LSBs of MAC operation
+    -- txc(dsutx, 16#c0#, txp);
+    -- txa(dsutx, 16#90#, 16#40#, 16#00#, 16#48#, txp);
+    -- txa(dsutx, 16#00#, 16#00#, 16#00#, 16#12#, txp);
+
+    -- -- W 0x00001210 @ DSU CPU0 ASR24
+    -- -- Disabled HW breakpoint @ 0x1210
+    -- txc(dsutx, 16#c0#, txp);
+    -- txa(dsutx, 16#90#, 16#40#, 16#00#, 16#60#, txp);
+    -- txa(dsutx, 16#00#, 16#00#, 16#12#, 16#10#, txp);
+
+    -- -- R DSU CPU0 CTRL
+    -- txc(dsutx, 16#80#, txp);
+    -- txa(dsutx, 16#90#, 16#00#, 16#00#, 16#00#, txp);
+    -- rxi(dsurx, w32, txp, lresp);
+
+    -- -- R 33 x 32bit RAM @ 0x00000000
+    -- txc(dsutx, 16#a0#, txp);
+    -- txa(dsutx, 16#40#, 16#00#, 16#00#, 16#00#, txp);
+    -- rxi(dsurx, w32, txp, lresp);
 
     end;
 

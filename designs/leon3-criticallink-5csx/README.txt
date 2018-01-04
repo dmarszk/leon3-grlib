@@ -108,6 +108,21 @@ HPS-FPGA bridge:
 	The LEON bus reset has to be programatically released before issuing
 	any reads on HPS-FPGA bridge. Otherwise the system will freeze.
 
+LEON AHB Memory Map:
+  0x00000000 - PROM, size 1 Mbyte, cacheable, prefetch
+	0x20000000 (Simulation only) - Test report module, size 1 Mbyte
+	0x40000000 - Avalon-MM memory controller, size 256 Mbyte
+	0x80000000 - AHB-APB bridge, size 1 Mbyte
+		0x80000100 - Generic UART, size 256 byte
+		0x80000200 - Multi-processor Interrupt Ctrl., size 256 byte
+		0x80000300 - Modular Timer Unit, size 256 byte
+		0x80000700 - AHB Debug UART, size 256 byte
+		0x80000800 - General Purpose I/O port, size 256 byte
+	0x90000000 - LEON3 Debug Support Unit, size 256 Mbyte
+	0xc0000000 - AMBA AHB/AXI Bridge, size 256 Mbyte
+	0xfffc0000 - OC CAN AHB interface, size 256 byte
+
+	
 FPGA-HPS bridge:
   The access to the HPS peripherals is given an offset in the AHB2AXI
   bridge (example: 0xCF700000 translates to 0xFF700000). This can be
@@ -117,6 +132,7 @@ Interrupts:
   2 - APB UART
   7 - AHB status register (disabled in the default config)
   8 - Timer
+  13 - CAN_OC
 
 	GRGPIO can generate signal on any of the IRQ line.
 

@@ -644,7 +644,7 @@ set active_menus [list]
 set processed_top_level 0
 set ARCH sparc
 set menus_per_column 4
-set total_menus 18
+set total_menus 19
 
 proc toplevel_menu {num} {
 	if {$num == 4} then {return 3}
@@ -657,6 +657,7 @@ proc toplevel_menu {num} {
 	if {$num == 14} then {return 13}
 	if {$num == 15} then {return 13}
 	if {$num == 16} then {return 13}
+	if {$num == 17} then {return 13}
 	return $num
 }
 
@@ -3310,7 +3311,8 @@ proc menu13 {w title} {
 
 	submenu $w.config.f 13 0 "On-chip ROM/RAM                " 14
 	submenu $w.config.f 13 1 "AHB Status reg               " 15
-	submenu $w.config.f 13 2 "UARTs, timers and irq control         " 16
+	submenu $w.config.f 13 2 "CAN                     " 16
+	submenu $w.config.f 13 3 "UARTs, timers and irq control         " 17
 
 
 
@@ -3642,12 +3644,12 @@ proc menu16 {w title} {
 	global active_menus
 	set active_menus [lsort -integer [linsert $active_menus end 16]]
 	message $w.m -width 400 -aspect 300 -text \
-		"UARTs, timers and irq control         "  -relief raised
+		"CAN                     "  -relief raised
 	pack $w.m -pady 10 -side top -padx 10
-	wm title $w "UARTs, timers and irq control         " 
+	wm title $w "CAN                     " 
 
 	bind $w <Escape> "catch {focus $oldFocus}; destroy $w; unregister_active 16; break"
-	set nextscript "catch {focus $oldFocus}; destroy $w; unregister_active 16; catch {destroy .menu13}; unregister_active 13; menu17 .menu17 \"$title\""
+	set nextscript "catch {focus $oldFocus}; destroy $w; unregister_active 16; menu17 .menu17 \"$title\""
 	frame $w.f
 	button $w.f.back -text "OK" \
 		-width 15 -command "catch {focus $oldFocus}; destroy $w; unregister_active 16"
@@ -3684,31 +3686,12 @@ proc menu16 {w title} {
 	pack $w.config.canvas -side right -fill y
 
 
-	bool $w.config.f 16 0 "Enable console UART                  " CONFIG_UART1_ENABLE
-	global tmpvar_31
-	minimenu $w.config.f 16 1 "UART1 FIFO depth" tmpvar_31 CONFIG_UA1_FIFO1
-	menu $w.config.f.x1.x.menu -tearoffcommand "menutitle \"UART1 FIFO depth\""
-	$w.config.f.x1.x.menu add radiobutton -label "1" -variable tmpvar_31 -value "1" -command "update_active"
-	$w.config.f.x1.x.menu add radiobutton -label "2" -variable tmpvar_31 -value "2" -command "update_active"
-	$w.config.f.x1.x.menu add radiobutton -label "4" -variable tmpvar_31 -value "4" -command "update_active"
-	$w.config.f.x1.x.menu add radiobutton -label "8" -variable tmpvar_31 -value "8" -command "update_active"
-	$w.config.f.x1.x.menu add radiobutton -label "16" -variable tmpvar_31 -value "16" -command "update_active"
-	$w.config.f.x1.x.menu add radiobutton -label "32" -variable tmpvar_31 -value "32" -command "update_active"
-	menusplit $w $w.config.f.x1.x.menu 6
-	bool $w.config.f 16 2 "Enable LEON3 interrupt controller    " CONFIG_IRQ3_ENABLE
-	bool $w.config.f 16 3 "Enable secondary interrupts           " CONFIG_IRQ3_SEC
-	int $w.config.f 16 4 "Secondary interrupt number (1 - 15)    " CONFIG_IRQ3_NSEC
-	bool $w.config.f 16 5 "Enable Timer Unit                    " CONFIG_GPT_ENABLE
-	int $w.config.f 16 6 "Number of timers (1 - 7)              " CONFIG_GPT_NTIM
-	int $w.config.f 16 7 "Scaler width (2 - 16)                 " CONFIG_GPT_SW
-	int $w.config.f 16 8 "Timer width (2 - 32)                  " CONFIG_GPT_TW
-	int $w.config.f 16 9 "Timer unit interrupt                  " CONFIG_GPT_IRQ
-	bool $w.config.f 16 10 "Separate interrupts                  " CONFIG_GPT_SEPIRQ
-	bool $w.config.f 16 11 "Watchdog enable                      " CONFIG_GPT_WDOGEN
-	hex $w.config.f 16 12 "Initial watchdog time-out value       " CONFIG_GPT_WDOG
-	bool $w.config.f 16 13 "Enable generic GPIO port              " CONFIG_GRGPIO_ENABLE
-	int $w.config.f 16 14 "GPIO width            " CONFIG_GRGPIO_WIDTH
-	hex $w.config.f 16 15 "GPIO interrupt mask   " CONFIG_GRGPIO_IMASK
+	bool $w.config.f 16 0 "Enable CAN interface                 " CONFIG_CAN_ENABLE
+	hex $w.config.f 16 1 "CAN I/O area start address (haddr\[19:8\]) " CONFIG_CANIO
+	int $w.config.f 16 2 "Interrupt number                      " CONFIG_CANIRQ
+	bool $w.config.f 16 3 "Enable loop-back testing             " CONFIG_CANLOOP
+	bool $w.config.f 16 4 "Enable synchronous reset             " CONFIG_CAN_SYNCRST
+	bool $w.config.f 16 5 "Enable FT FIFO memory                " CONFIG_CAN_FT
 
 
 
@@ -3746,40 +3729,190 @@ proc menu16 {w title} {
 }
 
 proc update_menu16 {} {
-	global CONFIG_UART1_ENABLE
-	if {($CONFIG_UART1_ENABLE == 1)} then {configure_entry .menu16.config.f.x1 normal {x l}} else {configure_entry .menu16.config.f.x1 disabled {x l}}
-	global CONFIG_IRQ3_ENABLE
-	global CONFIG_IRQ3_SEC
-	if {($CONFIG_IRQ3_ENABLE == 1)} then {
+	global CONFIG_CAN_ENABLE
+	global CONFIG_CANIO
+	if {($CONFIG_CAN_ENABLE == 1)} then {.menu16.config.f.x1.x configure -state normal -foreground [ cget .ref -foreground ]; .menu16.config.f.x1.l configure -state normal; } else {.menu16.config.f.x1.x configure -state disabled -foreground [ cget .ref -disabledforeground ]; .menu16.config.f.x1.l configure -state disabled}
+	global CONFIG_CANIRQ
+	if {($CONFIG_CAN_ENABLE == 1)} then {.menu16.config.f.x2.x configure -state normal -foreground [ cget .ref -foreground ]; .menu16.config.f.x2.l configure -state normal; } else {.menu16.config.f.x2.x configure -state disabled -foreground [ cget .ref -disabledforeground ]; .menu16.config.f.x2.l configure -state disabled}
+	global CONFIG_CANLOOP
+	if {($CONFIG_CAN_ENABLE == 1)} then {
 	configure_entry .menu16.config.f.x3 normal {n l y}} else {configure_entry .menu16.config.f.x3 disabled {y n l}}
-	global CONFIG_IRQ3_NSEC
-	if {($CONFIG_IRQ3_ENABLE == 1) && ($CONFIG_IRQ3_SEC == 1)} then {.menu16.config.f.x4.x configure -state normal -foreground [ cget .ref -foreground ]; .menu16.config.f.x4.l configure -state normal; } else {.menu16.config.f.x4.x configure -state disabled -foreground [ cget .ref -disabledforeground ]; .menu16.config.f.x4.l configure -state disabled}
-	global CONFIG_GPT_ENABLE
-	global CONFIG_GPT_NTIM
-	if {($CONFIG_GPT_ENABLE == 1)} then {.menu16.config.f.x6.x configure -state normal -foreground [ cget .ref -foreground ]; .menu16.config.f.x6.l configure -state normal; } else {.menu16.config.f.x6.x configure -state disabled -foreground [ cget .ref -disabledforeground ]; .menu16.config.f.x6.l configure -state disabled}
-	global CONFIG_GPT_SW
-	if {($CONFIG_GPT_ENABLE == 1)} then {.menu16.config.f.x7.x configure -state normal -foreground [ cget .ref -foreground ]; .menu16.config.f.x7.l configure -state normal; } else {.menu16.config.f.x7.x configure -state disabled -foreground [ cget .ref -disabledforeground ]; .menu16.config.f.x7.l configure -state disabled}
-	global CONFIG_GPT_TW
-	if {($CONFIG_GPT_ENABLE == 1)} then {.menu16.config.f.x8.x configure -state normal -foreground [ cget .ref -foreground ]; .menu16.config.f.x8.l configure -state normal; } else {.menu16.config.f.x8.x configure -state disabled -foreground [ cget .ref -disabledforeground ]; .menu16.config.f.x8.l configure -state disabled}
-	global CONFIG_GPT_IRQ
-	if {($CONFIG_GPT_ENABLE == 1)} then {.menu16.config.f.x9.x configure -state normal -foreground [ cget .ref -foreground ]; .menu16.config.f.x9.l configure -state normal; } else {.menu16.config.f.x9.x configure -state disabled -foreground [ cget .ref -disabledforeground ]; .menu16.config.f.x9.l configure -state disabled}
-	global CONFIG_GPT_SEPIRQ
-	if {($CONFIG_GPT_ENABLE == 1)} then {
-	configure_entry .menu16.config.f.x10 normal {n l y}} else {configure_entry .menu16.config.f.x10 disabled {y n l}}
-	global CONFIG_GPT_WDOGEN
-	if {($CONFIG_GPT_ENABLE == 1)} then {
-	configure_entry .menu16.config.f.x11 normal {n l y}} else {configure_entry .menu16.config.f.x11 disabled {y n l}}
-	global CONFIG_GPT_WDOG
-	if {($CONFIG_GPT_ENABLE == 1) && ($CONFIG_GPT_WDOGEN == 1)} then {.menu16.config.f.x12.x configure -state normal -foreground [ cget .ref -foreground ]; .menu16.config.f.x12.l configure -state normal; } else {.menu16.config.f.x12.x configure -state disabled -foreground [ cget .ref -disabledforeground ]; .menu16.config.f.x12.l configure -state disabled}
-	global CONFIG_GRGPIO_ENABLE
-	global CONFIG_GRGPIO_WIDTH
-	if {($CONFIG_GRGPIO_ENABLE == 1)} then {.menu16.config.f.x14.x configure -state normal -foreground [ cget .ref -foreground ]; .menu16.config.f.x14.l configure -state normal; } else {.menu16.config.f.x14.x configure -state disabled -foreground [ cget .ref -disabledforeground ]; .menu16.config.f.x14.l configure -state disabled}
-	global CONFIG_GRGPIO_IMASK
-	if {($CONFIG_GRGPIO_ENABLE == 1)} then {.menu16.config.f.x15.x configure -state normal -foreground [ cget .ref -foreground ]; .menu16.config.f.x15.l configure -state normal; } else {.menu16.config.f.x15.x configure -state disabled -foreground [ cget .ref -disabledforeground ]; .menu16.config.f.x15.l configure -state disabled}
+	global CONFIG_CAN_SYNCRST
+	if {($CONFIG_CAN_ENABLE == 1)} then {
+	configure_entry .menu16.config.f.x4 normal {n l y}} else {configure_entry .menu16.config.f.x4 disabled {y n l}}
+	global CONFIG_CAN_FT
+	if {($CONFIG_CAN_ENABLE == 1)} then {
+	configure_entry .menu16.config.f.x5 normal {n l y}} else {configure_entry .menu16.config.f.x5 disabled {y n l}}
 }
 
 
 proc update_define_menu16 {} {
+	update_define_mainmenu
+	global CONFIG_MODULES
+	global CONFIG_CAN_ENABLE
+	global CONFIG_CANIO
+	if {($CONFIG_CAN_ENABLE == 1)} then {validate_hex CONFIG_CANIO "$CONFIG_CANIO" C00}
+	global CONFIG_CANIRQ
+	if {($CONFIG_CAN_ENABLE == 1)} then {validate_int CONFIG_CANIRQ "$CONFIG_CANIRQ" 13}
+	global CONFIG_CANLOOP
+	if {($CONFIG_CAN_ENABLE == 1)} then {
+	set CONFIG_CANLOOP [expr $CONFIG_CANLOOP&15]} else {set CONFIG_CANLOOP [expr $CONFIG_CANLOOP|16]}
+	global CONFIG_CAN_SYNCRST
+	if {($CONFIG_CAN_ENABLE == 1)} then {
+	set CONFIG_CAN_SYNCRST [expr $CONFIG_CAN_SYNCRST&15]} else {set CONFIG_CAN_SYNCRST [expr $CONFIG_CAN_SYNCRST|16]}
+	global CONFIG_CAN_FT
+	if {($CONFIG_CAN_ENABLE == 1)} then {
+	set CONFIG_CAN_FT [expr $CONFIG_CAN_FT&15]} else {set CONFIG_CAN_FT [expr $CONFIG_CAN_FT|16]}
+}
+
+
+proc menu17 {w title} {
+	set oldFocus [focus]
+	catch {focus .menu13}
+	catch {destroy $w; unregister_active 17}
+	toplevel $w -class Dialog
+	wm withdraw $w
+	global active_menus
+	set active_menus [lsort -integer [linsert $active_menus end 17]]
+	message $w.m -width 400 -aspect 300 -text \
+		"UARTs, timers and irq control         "  -relief raised
+	pack $w.m -pady 10 -side top -padx 10
+	wm title $w "UARTs, timers and irq control         " 
+
+	bind $w <Escape> "catch {focus $oldFocus}; destroy $w; unregister_active 17; break"
+	set nextscript "catch {focus $oldFocus}; destroy $w; unregister_active 17; catch {destroy .menu13}; unregister_active 13; menu18 .menu18 \"$title\""
+	frame $w.f
+	button $w.f.back -text "OK" \
+		-width 15 -command "catch {focus $oldFocus}; destroy $w; unregister_active 17"
+	button $w.f.next -text "Next" -underline 0\
+		-width 15 -command $nextscript
+	bind all <Alt-n> $nextscript
+	button $w.f.prev -text "Prev" -underline 0\
+		-width 15 -command "catch {focus $oldFocus}; destroy $w; unregister_active 17; menu16 .menu16 \"$title\""
+	bind $w <Alt-p> "catch {focus $oldFocus}; destroy $w; unregister_active 17; menu16 .menu16 \"$title\";break"
+	pack $w.f.back $w.f.next $w.f.prev -side left -expand on
+	pack $w.f -pady 10 -side bottom -anchor w -fill x
+	frame $w.topline -relief ridge -borderwidth 2 -height 2
+	pack $w.topline -side top -fill x
+
+	frame $w.botline -relief ridge -borderwidth 2 -height 2
+	pack $w.botline -side bottom -fill x
+
+	frame $w.config
+	pack $w.config -fill y -expand on
+
+	scrollbar $w.config.vscroll -command "$w.config.canvas yview"
+	pack $w.config.vscroll -side right -fill y
+
+	canvas $w.config.canvas -height 1\
+		-relief flat -borderwidth 0 -yscrollcommand "$w.config.vscroll set" \
+		-width [expr [winfo screenwidth .] * 1 / 2] 
+	frame $w.config.f
+	bind $w <Key-Down> "$w.config.canvas yview scroll  1 unit;break;"
+	bind $w <Key-Up> "$w.config.canvas yview scroll  -1 unit;break;"
+	bind $w <Key-Next> "$w.config.canvas yview scroll  1 page;break;"
+	bind $w <Key-Prior> "$w.config.canvas yview scroll  -1 page;break;"
+	bind $w <Key-Home> "$w.config.canvas yview moveto 0;break;"
+	bind $w <Key-End> "$w.config.canvas yview moveto 1 ;break;"
+	pack $w.config.canvas -side right -fill y
+
+
+	bool $w.config.f 17 0 "Enable console UART                  " CONFIG_UART1_ENABLE
+	global tmpvar_31
+	minimenu $w.config.f 17 1 "UART1 FIFO depth" tmpvar_31 CONFIG_UA1_FIFO1
+	menu $w.config.f.x1.x.menu -tearoffcommand "menutitle \"UART1 FIFO depth\""
+	$w.config.f.x1.x.menu add radiobutton -label "1" -variable tmpvar_31 -value "1" -command "update_active"
+	$w.config.f.x1.x.menu add radiobutton -label "2" -variable tmpvar_31 -value "2" -command "update_active"
+	$w.config.f.x1.x.menu add radiobutton -label "4" -variable tmpvar_31 -value "4" -command "update_active"
+	$w.config.f.x1.x.menu add radiobutton -label "8" -variable tmpvar_31 -value "8" -command "update_active"
+	$w.config.f.x1.x.menu add radiobutton -label "16" -variable tmpvar_31 -value "16" -command "update_active"
+	$w.config.f.x1.x.menu add radiobutton -label "32" -variable tmpvar_31 -value "32" -command "update_active"
+	menusplit $w $w.config.f.x1.x.menu 6
+	bool $w.config.f 17 2 "Enable LEON3 interrupt controller    " CONFIG_IRQ3_ENABLE
+	bool $w.config.f 17 3 "Enable secondary interrupts           " CONFIG_IRQ3_SEC
+	int $w.config.f 17 4 "Secondary interrupt number (1 - 15)    " CONFIG_IRQ3_NSEC
+	bool $w.config.f 17 5 "Enable Timer Unit                    " CONFIG_GPT_ENABLE
+	int $w.config.f 17 6 "Number of timers (1 - 7)              " CONFIG_GPT_NTIM
+	int $w.config.f 17 7 "Scaler width (2 - 16)                 " CONFIG_GPT_SW
+	int $w.config.f 17 8 "Timer width (2 - 32)                  " CONFIG_GPT_TW
+	int $w.config.f 17 9 "Timer unit interrupt                  " CONFIG_GPT_IRQ
+	bool $w.config.f 17 10 "Separate interrupts                  " CONFIG_GPT_SEPIRQ
+	bool $w.config.f 17 11 "Watchdog enable                      " CONFIG_GPT_WDOGEN
+	hex $w.config.f 17 12 "Initial watchdog time-out value       " CONFIG_GPT_WDOG
+	bool $w.config.f 17 13 "Enable generic GPIO port              " CONFIG_GRGPIO_ENABLE
+	int $w.config.f 17 14 "GPIO width            " CONFIG_GRGPIO_WIDTH
+	hex $w.config.f 17 15 "GPIO interrupt mask   " CONFIG_GRGPIO_IMASK
+
+
+
+	focus $w
+	update_active
+	global winx; global winy
+	if {[winfo exists .menu13] == 0} then {menu13 .menu13 "Peripherals             "}
+	set winx [expr [winfo x .menu13]+30]; set winy [expr [winfo y .menu13]+30]
+	if {[winfo exists $w]} then {wm geometry $w +$winx+$winy}
+	update idletasks
+	if {[winfo exists $w]} then  {$w.config.canvas create window 0 0 -anchor nw -window $w.config.f
+
+	$w.config.canvas configure \
+		-width [expr [winfo reqwidth $w.config.f] + 1]\
+		-scrollregion "-1 -1 [expr [winfo reqwidth $w.config.f] + 1] \
+			 [expr [winfo reqheight $w.config.f] + 1]"
+
+	set winy [expr [winfo reqh $w] - [winfo reqh $w.config.canvas]]
+	set scry [expr [winfo screenh $w] / 2]
+	set maxy [expr [winfo screenh $w] * 3 / 4]
+	set canvtotal [expr [winfo reqh $w.config.f] + 2]
+	if [expr $winy + $canvtotal < $maxy] {
+		$w.config.canvas configure -height $canvtotal
+	} else {
+		$w.config.canvas configure -height [expr $scry - $winy]
+		}
+	}
+	update idletasks
+	if {[winfo exists $w]} then {
+	wm maxsize $w [winfo width $w] [winfo screenheight $w]
+	wm minsize $w [winfo width $w] 100
+
+	wm deiconify $w
+}
+}
+
+proc update_menu17 {} {
+	global CONFIG_UART1_ENABLE
+	if {($CONFIG_UART1_ENABLE == 1)} then {configure_entry .menu17.config.f.x1 normal {x l}} else {configure_entry .menu17.config.f.x1 disabled {x l}}
+	global CONFIG_IRQ3_ENABLE
+	global CONFIG_IRQ3_SEC
+	if {($CONFIG_IRQ3_ENABLE == 1)} then {
+	configure_entry .menu17.config.f.x3 normal {n l y}} else {configure_entry .menu17.config.f.x3 disabled {y n l}}
+	global CONFIG_IRQ3_NSEC
+	if {($CONFIG_IRQ3_ENABLE == 1) && ($CONFIG_IRQ3_SEC == 1)} then {.menu17.config.f.x4.x configure -state normal -foreground [ cget .ref -foreground ]; .menu17.config.f.x4.l configure -state normal; } else {.menu17.config.f.x4.x configure -state disabled -foreground [ cget .ref -disabledforeground ]; .menu17.config.f.x4.l configure -state disabled}
+	global CONFIG_GPT_ENABLE
+	global CONFIG_GPT_NTIM
+	if {($CONFIG_GPT_ENABLE == 1)} then {.menu17.config.f.x6.x configure -state normal -foreground [ cget .ref -foreground ]; .menu17.config.f.x6.l configure -state normal; } else {.menu17.config.f.x6.x configure -state disabled -foreground [ cget .ref -disabledforeground ]; .menu17.config.f.x6.l configure -state disabled}
+	global CONFIG_GPT_SW
+	if {($CONFIG_GPT_ENABLE == 1)} then {.menu17.config.f.x7.x configure -state normal -foreground [ cget .ref -foreground ]; .menu17.config.f.x7.l configure -state normal; } else {.menu17.config.f.x7.x configure -state disabled -foreground [ cget .ref -disabledforeground ]; .menu17.config.f.x7.l configure -state disabled}
+	global CONFIG_GPT_TW
+	if {($CONFIG_GPT_ENABLE == 1)} then {.menu17.config.f.x8.x configure -state normal -foreground [ cget .ref -foreground ]; .menu17.config.f.x8.l configure -state normal; } else {.menu17.config.f.x8.x configure -state disabled -foreground [ cget .ref -disabledforeground ]; .menu17.config.f.x8.l configure -state disabled}
+	global CONFIG_GPT_IRQ
+	if {($CONFIG_GPT_ENABLE == 1)} then {.menu17.config.f.x9.x configure -state normal -foreground [ cget .ref -foreground ]; .menu17.config.f.x9.l configure -state normal; } else {.menu17.config.f.x9.x configure -state disabled -foreground [ cget .ref -disabledforeground ]; .menu17.config.f.x9.l configure -state disabled}
+	global CONFIG_GPT_SEPIRQ
+	if {($CONFIG_GPT_ENABLE == 1)} then {
+	configure_entry .menu17.config.f.x10 normal {n l y}} else {configure_entry .menu17.config.f.x10 disabled {y n l}}
+	global CONFIG_GPT_WDOGEN
+	if {($CONFIG_GPT_ENABLE == 1)} then {
+	configure_entry .menu17.config.f.x11 normal {n l y}} else {configure_entry .menu17.config.f.x11 disabled {y n l}}
+	global CONFIG_GPT_WDOG
+	if {($CONFIG_GPT_ENABLE == 1) && ($CONFIG_GPT_WDOGEN == 1)} then {.menu17.config.f.x12.x configure -state normal -foreground [ cget .ref -foreground ]; .menu17.config.f.x12.l configure -state normal; } else {.menu17.config.f.x12.x configure -state disabled -foreground [ cget .ref -disabledforeground ]; .menu17.config.f.x12.l configure -state disabled}
+	global CONFIG_GRGPIO_ENABLE
+	global CONFIG_GRGPIO_WIDTH
+	if {($CONFIG_GRGPIO_ENABLE == 1)} then {.menu17.config.f.x14.x configure -state normal -foreground [ cget .ref -foreground ]; .menu17.config.f.x14.l configure -state normal; } else {.menu17.config.f.x14.x configure -state disabled -foreground [ cget .ref -disabledforeground ]; .menu17.config.f.x14.l configure -state disabled}
+	global CONFIG_GRGPIO_IMASK
+	if {($CONFIG_GRGPIO_ENABLE == 1)} then {.menu17.config.f.x15.x configure -state normal -foreground [ cget .ref -foreground ]; .menu17.config.f.x15.l configure -state normal; } else {.menu17.config.f.x15.x configure -state disabled -foreground [ cget .ref -disabledforeground ]; .menu17.config.f.x15.l configure -state disabled}
+}
+
+
+proc update_define_menu17 {} {
 	update_define_mainmenu
 	global CONFIG_MODULES
 	global tmpvar_31
@@ -3826,107 +3959,7 @@ proc update_define_menu16 {} {
 }
 
 
-menu_option menu17 17 "Hard Processor System"
-proc menu17 {w title} {
-	set oldFocus [focus]
-	catch {destroy $w; unregister_active 17}
-	toplevel $w -class Dialog
-	wm withdraw $w
-	global active_menus
-	set active_menus [lsort -integer [linsert $active_menus end 17]]
-	message $w.m -width 400 -aspect 300 -text \
-		"Hard Processor System"  -relief raised
-	pack $w.m -pady 10 -side top -padx 10
-	wm title $w "Hard Processor System" 
-
-	bind $w <Escape> "catch {focus $oldFocus}; destroy $w; unregister_active 17; break"
-	set nextscript "catch {focus $oldFocus}; destroy $w; unregister_active 17; menu18 .menu18 \"$title\""
-	frame $w.f
-	button $w.f.back -text "Main Menu" \
-		-width 15 -command "catch {focus $oldFocus}; destroy $w; unregister_active 17"
-	button $w.f.next -text "Next" -underline 0\
-		-width 15 -command $nextscript
-	bind all <Alt-n> $nextscript
-	button $w.f.prev -text "Prev" -underline 0\
-		-width 15 -command "catch {focus $oldFocus}; destroy $w; unregister_active 17; menu16 .menu16 \"$title\""
-	bind $w <Alt-p> "catch {focus $oldFocus}; destroy $w; unregister_active 17; menu16 .menu16 \"$title\";break"
-	pack $w.f.back $w.f.next $w.f.prev -side left -expand on
-	pack $w.f -pady 10 -side bottom -anchor w -fill x
-	frame $w.topline -relief ridge -borderwidth 2 -height 2
-	pack $w.topline -side top -fill x
-
-	frame $w.botline -relief ridge -borderwidth 2 -height 2
-	pack $w.botline -side bottom -fill x
-
-	frame $w.config
-	pack $w.config -fill y -expand on
-
-	scrollbar $w.config.vscroll -command "$w.config.canvas yview"
-	pack $w.config.vscroll -side right -fill y
-
-	canvas $w.config.canvas -height 1\
-		-relief flat -borderwidth 0 -yscrollcommand "$w.config.vscroll set" \
-		-width [expr [winfo screenwidth .] * 1 / 2] 
-	frame $w.config.f
-	bind $w <Key-Down> "$w.config.canvas yview scroll  1 unit;break;"
-	bind $w <Key-Up> "$w.config.canvas yview scroll  -1 unit;break;"
-	bind $w <Key-Next> "$w.config.canvas yview scroll  1 page;break;"
-	bind $w <Key-Prior> "$w.config.canvas yview scroll  -1 page;break;"
-	bind $w <Key-Home> "$w.config.canvas yview moveto 0;break;"
-	bind $w <Key-End> "$w.config.canvas yview moveto 1 ;break;"
-	pack $w.config.canvas -side right -fill y
-
-
-	bool $w.config.f 17 0 "HPS2FPGA bridge                    " CONFIG_HPS2FPGA
-	bool $w.config.f 17 1 "FPGA2HPS bridge	                   " CONFIG_FPGA2HPS
-	bool $w.config.f 17 2 "Endian swap on bridges             " CONFIG_BRIDGE_ENDIAN_SWAP
-	bool $w.config.f 17 3 "HPS reset resets LEON3             " CONFIG_HPS_RESET
-
-
-
-	focus $w
-	update_active
-	global winx; global winy
-	set winx [expr [winfo x .]+30]; set winy [expr [winfo y .]+30]
-	if {[winfo exists $w]} then {wm geometry $w +$winx+$winy}
-	update idletasks
-	if {[winfo exists $w]} then  {$w.config.canvas create window 0 0 -anchor nw -window $w.config.f
-
-	$w.config.canvas configure \
-		-width [expr [winfo reqwidth $w.config.f] + 1]\
-		-scrollregion "-1 -1 [expr [winfo reqwidth $w.config.f] + 1] \
-			 [expr [winfo reqheight $w.config.f] + 1]"
-
-	set winy [expr [winfo reqh $w] - [winfo reqh $w.config.canvas]]
-	set scry [expr [winfo screenh $w] / 2]
-	set maxy [expr [winfo screenh $w] * 3 / 4]
-	set canvtotal [expr [winfo reqh $w.config.f] + 2]
-	if [expr $winy + $canvtotal < $maxy] {
-		$w.config.canvas configure -height $canvtotal
-	} else {
-		$w.config.canvas configure -height [expr $scry - $winy]
-		}
-	}
-	update idletasks
-	if {[winfo exists $w]} then {
-	wm maxsize $w [winfo width $w] [winfo screenheight $w]
-	wm minsize $w [winfo width $w] 100
-
-	wm deiconify $w
-}
-}
-
-proc update_menu17 {} {
-}
-
-
-proc update_define_menu17 {} {
-	update_define_mainmenu
-	global CONFIG_MODULES
-}
-
-
-menu_option menu18 18 "VHDL Debugging        "
+menu_option menu18 18 "Hard Processor System"
 proc menu18 {w title} {
 	set oldFocus [focus]
 	catch {destroy $w; unregister_active 18}
@@ -3935,19 +3968,18 @@ proc menu18 {w title} {
 	global active_menus
 	set active_menus [lsort -integer [linsert $active_menus end 18]]
 	message $w.m -width 400 -aspect 300 -text \
-		"VHDL Debugging        "  -relief raised
+		"Hard Processor System"  -relief raised
 	pack $w.m -pady 10 -side top -padx 10
-	wm title $w "VHDL Debugging        " 
+	wm title $w "Hard Processor System" 
 
 	bind $w <Escape> "catch {focus $oldFocus}; destroy $w; unregister_active 18; break"
-	set nextscript "catch {focus $oldFocus}; menu19 .menu19 \"$title\""
+	set nextscript "catch {focus $oldFocus}; destroy $w; unregister_active 18; menu19 .menu19 \"$title\""
 	frame $w.f
 	button $w.f.back -text "Main Menu" \
 		-width 15 -command "catch {focus $oldFocus}; destroy $w; unregister_active 18"
 	button $w.f.next -text "Next" -underline 0\
 		-width 15 -command $nextscript
-	$w.f.next configure -state disabled
-	bind all <Alt-n> "puts \"no more menus\" "
+	bind all <Alt-n> $nextscript
 	button $w.f.prev -text "Prev" -underline 0\
 		-width 15 -command "catch {focus $oldFocus}; destroy $w; unregister_active 18; menu17 .menu17 \"$title\""
 	bind $w <Alt-p> "catch {focus $oldFocus}; destroy $w; unregister_active 18; menu17 .menu17 \"$title\";break"
@@ -3978,7 +4010,10 @@ proc menu18 {w title} {
 	pack $w.config.canvas -side right -fill y
 
 
-	bool $w.config.f 18 0 "Accelerated UART tracing       " CONFIG_DEBUG_UART
+	bool $w.config.f 18 0 "HPS2FPGA bridge                    " CONFIG_HPS2FPGA
+	bool $w.config.f 18 1 "FPGA2HPS bridge	                   " CONFIG_FPGA2HPS
+	bool $w.config.f 18 2 "Endian swap on bridges             " CONFIG_BRIDGE_ENDIAN_SWAP
+	bool $w.config.f 18 3 "HPS reset resets LEON3             " CONFIG_HPS_RESET
 
 
 
@@ -4019,6 +4054,104 @@ proc update_menu18 {} {
 
 
 proc update_define_menu18 {} {
+	update_define_mainmenu
+	global CONFIG_MODULES
+}
+
+
+menu_option menu19 19 "VHDL Debugging        "
+proc menu19 {w title} {
+	set oldFocus [focus]
+	catch {destroy $w; unregister_active 19}
+	toplevel $w -class Dialog
+	wm withdraw $w
+	global active_menus
+	set active_menus [lsort -integer [linsert $active_menus end 19]]
+	message $w.m -width 400 -aspect 300 -text \
+		"VHDL Debugging        "  -relief raised
+	pack $w.m -pady 10 -side top -padx 10
+	wm title $w "VHDL Debugging        " 
+
+	bind $w <Escape> "catch {focus $oldFocus}; destroy $w; unregister_active 19; break"
+	set nextscript "catch {focus $oldFocus}; menu20 .menu20 \"$title\""
+	frame $w.f
+	button $w.f.back -text "Main Menu" \
+		-width 15 -command "catch {focus $oldFocus}; destroy $w; unregister_active 19"
+	button $w.f.next -text "Next" -underline 0\
+		-width 15 -command $nextscript
+	$w.f.next configure -state disabled
+	bind all <Alt-n> "puts \"no more menus\" "
+	button $w.f.prev -text "Prev" -underline 0\
+		-width 15 -command "catch {focus $oldFocus}; destroy $w; unregister_active 19; menu18 .menu18 \"$title\""
+	bind $w <Alt-p> "catch {focus $oldFocus}; destroy $w; unregister_active 19; menu18 .menu18 \"$title\";break"
+	pack $w.f.back $w.f.next $w.f.prev -side left -expand on
+	pack $w.f -pady 10 -side bottom -anchor w -fill x
+	frame $w.topline -relief ridge -borderwidth 2 -height 2
+	pack $w.topline -side top -fill x
+
+	frame $w.botline -relief ridge -borderwidth 2 -height 2
+	pack $w.botline -side bottom -fill x
+
+	frame $w.config
+	pack $w.config -fill y -expand on
+
+	scrollbar $w.config.vscroll -command "$w.config.canvas yview"
+	pack $w.config.vscroll -side right -fill y
+
+	canvas $w.config.canvas -height 1\
+		-relief flat -borderwidth 0 -yscrollcommand "$w.config.vscroll set" \
+		-width [expr [winfo screenwidth .] * 1 / 2] 
+	frame $w.config.f
+	bind $w <Key-Down> "$w.config.canvas yview scroll  1 unit;break;"
+	bind $w <Key-Up> "$w.config.canvas yview scroll  -1 unit;break;"
+	bind $w <Key-Next> "$w.config.canvas yview scroll  1 page;break;"
+	bind $w <Key-Prior> "$w.config.canvas yview scroll  -1 page;break;"
+	bind $w <Key-Home> "$w.config.canvas yview moveto 0;break;"
+	bind $w <Key-End> "$w.config.canvas yview moveto 1 ;break;"
+	pack $w.config.canvas -side right -fill y
+
+
+	bool $w.config.f 19 0 "Accelerated UART tracing       " CONFIG_DEBUG_UART
+
+
+
+	focus $w
+	update_active
+	global winx; global winy
+	set winx [expr [winfo x .]+30]; set winy [expr [winfo y .]+30]
+	if {[winfo exists $w]} then {wm geometry $w +$winx+$winy}
+	update idletasks
+	if {[winfo exists $w]} then  {$w.config.canvas create window 0 0 -anchor nw -window $w.config.f
+
+	$w.config.canvas configure \
+		-width [expr [winfo reqwidth $w.config.f] + 1]\
+		-scrollregion "-1 -1 [expr [winfo reqwidth $w.config.f] + 1] \
+			 [expr [winfo reqheight $w.config.f] + 1]"
+
+	set winy [expr [winfo reqh $w] - [winfo reqh $w.config.canvas]]
+	set scry [expr [winfo screenh $w] / 2]
+	set maxy [expr [winfo screenh $w] * 3 / 4]
+	set canvtotal [expr [winfo reqh $w.config.f] + 2]
+	if [expr $winy + $canvtotal < $maxy] {
+		$w.config.canvas configure -height $canvtotal
+	} else {
+		$w.config.canvas configure -height [expr $scry - $winy]
+		}
+	}
+	update idletasks
+	if {[winfo exists $w]} then {
+	wm maxsize $w [winfo width $w] [winfo screenheight $w]
+	wm minsize $w [winfo width $w] 100
+
+	wm deiconify $w
+}
+}
+
+proc update_menu19 {} {
+}
+
+
+proc update_define_menu19 {} {
 	update_define_mainmenu
 	global CONFIG_MODULES
 }
@@ -4333,6 +4466,12 @@ set CONFIG_AHBRAM_START A00
 set CONFIG_AHBRAM_PIPE 0
 set CONFIG_AHBSTAT_ENABLE 0
 set CONFIG_AHBSTAT_NFTSLV 1
+set CONFIG_CAN_ENABLE 0
+set CONFIG_CANIO C00
+set CONFIG_CANIRQ 13
+set CONFIG_CANLOOP 0
+set CONFIG_CAN_SYNCRST 0
+set CONFIG_CAN_FT 0
 set CONFIG_UART1_ENABLE 0
 set tmpvar_31 "(not set)"
 set CONFIG_UA1_FIFO1 0
@@ -4998,6 +5137,19 @@ proc writeconfig {file1 file2} {
 	write_tristate $cfg $autocfg CONFIG_AHBSTAT_ENABLE $CONFIG_AHBSTAT_ENABLE [list $notmod] 2
 	global CONFIG_AHBSTAT_NFTSLV
 	if {($CONFIG_AHBSTAT_ENABLE == 1)} then {write_int $cfg $autocfg CONFIG_AHBSTAT_NFTSLV $CONFIG_AHBSTAT_NFTSLV $notmod }
+	write_comment $cfg $autocfg "CAN                     "
+	global CONFIG_CAN_ENABLE
+	write_tristate $cfg $autocfg CONFIG_CAN_ENABLE $CONFIG_CAN_ENABLE [list $notmod] 2
+	global CONFIG_CANIO
+	if {($CONFIG_CAN_ENABLE == 1)} then {write_hex $cfg $autocfg CONFIG_CANIO $CONFIG_CANIO $notmod }
+	global CONFIG_CANIRQ
+	if {($CONFIG_CAN_ENABLE == 1)} then {write_int $cfg $autocfg CONFIG_CANIRQ $CONFIG_CANIRQ $notmod }
+	global CONFIG_CANLOOP
+	if {($CONFIG_CAN_ENABLE == 1)} then {write_tristate $cfg $autocfg CONFIG_CANLOOP $CONFIG_CANLOOP [list $notmod] 2 }
+	global CONFIG_CAN_SYNCRST
+	if {($CONFIG_CAN_ENABLE == 1)} then {write_tristate $cfg $autocfg CONFIG_CAN_SYNCRST $CONFIG_CAN_SYNCRST [list $notmod] 2 }
+	global CONFIG_CAN_FT
+	if {($CONFIG_CAN_ENABLE == 1)} then {write_tristate $cfg $autocfg CONFIG_CAN_FT $CONFIG_CAN_FT [list $notmod] 2 }
 	write_comment $cfg $autocfg "UARTs, timers and irq control         "
 	global CONFIG_UART1_ENABLE
 	write_tristate $cfg $autocfg CONFIG_UART1_ENABLE $CONFIG_UART1_ENABLE [list $notmod] 2

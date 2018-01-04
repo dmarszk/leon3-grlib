@@ -221,8 +221,7 @@
 /*
  * VHDL debug settings       
  */
-#define CONFIG_IU_DISAS 1
-#undef  CONFIG_IU_DISAS_NET
+#undef  CONFIG_IU_DISAS
 #undef  CONFIG_DEBUG_PC32
 /*
  * AMBA configuration
@@ -234,7 +233,7 @@
 #define CONFIG_AHB_IOADDR FFF
 #define CONFIG_APB_HADDR 800
 #undef  CONFIG_AHB_MON
-#define CONFIG_AHB_DTRACE 1
+#undef  CONFIG_AHB_DTRACE
 /*
  * Debug Link           
  */
@@ -254,6 +253,15 @@
  * AHB Status reg               
  */
 #undef  CONFIG_AHBSTAT_ENABLE
+/*
+ * CAN                     
+ */
+#define CONFIG_CAN_ENABLE 1
+#define CONFIG_CANIO C00
+#define CONFIG_CANIRQ (13)
+#undef  CONFIG_CANLOOP
+#undef  CONFIG_CAN_SYNCRST
+#undef  CONFIG_CAN_FT
 /*
  * UARTs, timers and irq control         
  */

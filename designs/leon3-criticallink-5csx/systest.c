@@ -4,8 +4,8 @@ main()
 {
 	report_start();
 
-	base_test();
-        greth_test(0x80000b00);
-        greth_test(0x80000c00);
-        report_end();
+//	base_test();
+	can_oc_test(0xfffc0000);
+
+	report_end();
 }
