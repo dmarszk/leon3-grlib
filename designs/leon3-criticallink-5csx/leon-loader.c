@@ -343,7 +343,7 @@ static uint32_t get_hps_section_address(Elf32_Shdr* shdr, Memory_Map_Entry** map
   return 0xFFFFFFFF;
 }
 
-static void load_section(int32_t fd, Elf32_Shdr* sh, uint32_t hps_addr, Memory_Map_Entry* map_entry)
+static void load_section(int32_t fd, Elf32_Shdr* sh, uint32_t hps_addr, Memory_Map_Entry* map_entry, char* section_name)
 {
   uint32_t pa_base, offset, mmap_size;
   void* va_base;
@@ -351,7 +351,8 @@ static void load_section(int32_t fd, Elf32_Shdr* sh, uint32_t hps_addr, Memory_M
   pa_base = hps_addr & ~(page_size - 1);
   offset = hps_addr - pa_base;
   mmap_size = ((hps_addr + sh->sh_size + page_size) & ~(page_size - 1)) - pa_base;
-  printf(" - mapping 0x%x bytes PA 0x%08x with target offset 0x%08x\n", mmap_size, pa_base, offset);
+  printf(" - mapping 0x%08X bytes PA 0x%08X (target offset 0x%08X) [%s]\n",
+    mmap_size, pa_base, offset, section_name);
   if(!dry_run)
   {
     va_base = mmap(0, mmap_size, PROT_READ | PROT_WRITE, MAP_SHARED, memfd, pa_base);
@@ -361,7 +362,8 @@ static void load_section(int32_t fd, Elf32_Shdr* sh, uint32_t hps_addr, Memory_M
       exit(-2);
     }
     va_buf = (char*)va_base + offset;
-    printf(" - loading 0x%x bytes to VA buf 0x%08x (VA base 0x%08x)\n", sh->sh_size, (uint32_t)va_buf, (uint32_t)va_base);
+    printf(" - loading 0x%08X bytes to VA buf 0x%08X (VA base 0x%08X) [%s]\n",
+      sh->sh_size, (uint32_t)va_buf, (uint32_t)va_base, section_name);
     read_section_to_buf(fd, sh, va_buf);
     if (munmap(va_base, mmap_size) == -1)
     {
@@ -409,15 +411,15 @@ static void load_sections_to_memory(int32_t fd, Elf32_Ehdr eh, Elf32_Shdr sh_tab
   printf("====================================================");
   printf("========================================\n");
   printf("\n"); /* end of section header table */
-  free(sh_str);
 
   for(i=0; i<eh.e_shnum; i++)
   {
     if((sh_table[i].sh_flags & SHF_ALLOC) == 0)
       continue;
     hps_section_address = get_hps_section_address(&sh_table[i], &map_entry);
-    load_section(fd, &sh_table[i], hps_section_address, map_entry);
+    load_section(fd, &sh_table[i], hps_section_address, map_entry, (sh_str + sh_table[i].sh_name));
   }
+  free(sh_str);
 }
 
 void print_usage(void)
