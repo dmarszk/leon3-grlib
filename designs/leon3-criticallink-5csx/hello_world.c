@@ -1,5 +1,7 @@
 #include <stdio.h>
 #include <stdint.h>
+#include "config.h"
+
 
 #define APB_UART0_BASE (0x80000100)
 
@@ -9,7 +11,10 @@
 #define APB_UART0_SCALER (APB_UART0_BASE + 0xC)
 #define APB_UART0_FIFO_DBG (APB_UART0_BASE + 0x10)
 
-#define MAIN_CLOCK (50000000)
+#define MHZ (1000000LL)
+#define SRC_CLK (100*MHZ)
+
+#define MAIN_CLOCK (SRC_CLK*CONFIG_CLK_MUL/CONFIG_CLK_DIV)
 #define UART0_BAUD_RATE (115200)
 #define UART0_SCALER_VALUE ((MAIN_CLOCK + UART0_BAUD_RATE * 4) / (UART0_BAUD_RATE * 8))
 
