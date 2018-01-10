@@ -70,7 +70,7 @@ derive_pll_clocks
 set ahbclks [ get_clocks { clkgen0* } ]
 set ddr_aficlk [ get_clocks { ddr3if0|*|pll_afi_clk } ]
 
-constrain_cdc $ahbclks 10.0 $ddr_aficlk 6.0
+#constrain_cdc $ahbclks 10.0 $ddr_aficlk 6.0
 
 if { $sta_mode } {
     # Timing-ignore reset synchronizers inside GRETH

@@ -15,7 +15,7 @@ package config is
 -- Clock generator
   constant CFG_CLKTECH : integer := altera;
   constant CFG_CLKMUL : integer := (5);
-  constant CFG_CLKDIV : integer := (10);
+  constant CFG_CLKDIV : integer := (15);
   constant CFG_OCLKDIV : integer := 1;
   constant CFG_OCLKBDIV : integer := 0;
   constant CFG_OCLKCDIV : integer := 0;

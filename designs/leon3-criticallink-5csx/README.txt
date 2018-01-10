@@ -122,7 +122,7 @@ LEON AHB Memory Map:
 	0xc0000000 - AMBA AHB/AXI Bridge, size 256 Mbyte
 	0xfffc0000 - OC CAN AHB interface, size 256 byte
 
-	
+
 FPGA-HPS bridge:
   The access to the HPS peripherals is given an offset in the AHB2AXI
   bridge (example: 0xCF700000 translates to 0xFF700000). This can be
@@ -162,8 +162,10 @@ Then copy leon-loader to the target board filesystem.
 Booting Hello World on LEON from HPS
 ------------------------------------
 Compile Hello World using:
-* (LEON with FPU) sparc-elf-gcc -Wall hello_world.c -o hello_world.exe
-* (LEON without FPU) sparc-elf-gcc -Wall -msoft-float hello_world.c -o hello_world.exe
+* (LEON with FPU) sparc-gaisler-elf-clang -g -Wall hello_world.c -o hello_world.exe
+* (LEON without FPU) sparc-gaisler-elf-clang -g -Wall -msoft-float hello_world.c -o hello_world.exe
+
+For use with Bare-C Cross Compiler System v1, replace "sparc-gaisler-elf-clang" with "sparc-elf-gcc"
 
 Copy hello_world.exe to the target board and invoke there:
 * leon-loader -f leon_software.exe -br

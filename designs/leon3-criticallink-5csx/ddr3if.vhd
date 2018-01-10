@@ -55,7 +55,8 @@ entity ddr3if is
     ahb_clk: in std_ulogic;
     ahb_rst: in std_ulogic;
     ahbsi: in ahb_slv_in_type;
-    ahbso: out ahb_slv_out_type
+    ahbso: out ahb_slv_out_type;
+    afi_clk: out std_ulogic
     );
 end;
 
@@ -114,7 +115,7 @@ architecture rtl of ddr3if is
 
         signal vcc: std_ulogic;
 
-        signal afi_clk, afi_half_clk, afi_reset_n: std_ulogic;
+        signal local_afi_clk, afi_half_clk, afi_reset_n: std_ulogic;
         signal local_init_done, local_cal_success, local_cal_fail: std_ulogic;
 
         signal ck_p_arr, ck_n_arr, cke_arr, cs_arr: std_logic_vector(0 downto 0);
@@ -135,13 +136,14 @@ begin
   mem_cas_n <= casn_arr(0);
   mem_we_n <= wen_arr(0);
   mem_odt <= odt_arr(0);
+  afi_clk <= local_afi_clk;
   
   ctrl0: ddr3ctrl1
     port map (
       pll_ref_clk => pll_ref_clk,
       global_reset_n => global_reset_n,
       soft_reset_n => vcc,
-      afi_clk => afi_clk,
+      afi_clk => local_afi_clk,
       afi_half_clk => afi_half_clk,
       afi_reset_n => afi_reset_n,
       afi_reset_export_n => open,
@@ -203,7 +205,7 @@ begin
       ahbsi => ahbsi,
       ahbso => ahbso,
       rst_avl => afi_reset_n,
-      clk_avl => afi_clk,
+      clk_avl => local_afi_clk,
       avlsi => avlsi,
       avlso => avlso
       );

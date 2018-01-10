@@ -548,6 +548,7 @@ architecture rtl of leon3mp is
   signal cpu_rst_n : std_logic;
 
   signal hps_clock_50mhz : std_logic;
+  signal ddr_afi_clk : std_ulogic;
 
   -- Used for blinking indicator and controlling loaned HPS signals
   signal indicator_counter : std_logic_vector(31 downto 0) := (others => '0');
@@ -626,9 +627,9 @@ begin
     generic map (tech    => altera, clk_mul => CFG_CLKMUL,
                  clk_div => CFG_CLKDIV, sdramen => 0,
                  noclkfb => 0,
-                 freq => 100000 -- input clock freq
+                 freq => 150000 -- input clock freq
                  )
-    port map (clkin => CLK2DDR,
+    port map (clkin => ddr_afi_clk,
               pciclkin => gnd, clk => clkm, clkn => open,
               clk2x => open, sdclk => open, pciclk => open,
               cgi   => cgi, cgo => cgo);
@@ -853,7 +854,8 @@ begin
       ahb_clk => clkm,
       ahb_rst => rstn,
       ahbsi => ahbsi,
-      ahbso => ahbso(5)
+      ahbso => ahbso(5),
+      afi_clk => ddr_afi_clk
       );
 
 

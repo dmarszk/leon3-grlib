@@ -80,7 +80,7 @@
 #undef  CONFIG_CLK_CLKDLL
 #undef  CONFIG_CLK_DCM
 #define CONFIG_CLK_MUL (5)
-#define CONFIG_CLK_DIV (10)
+#define CONFIG_CLK_DIV (15)
 #undef  CONFIG_PCI_SYSCLK
 /*
  * Processor            
