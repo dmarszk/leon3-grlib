@@ -41,7 +41,7 @@ package config is
   constant CFG_ISETS : integer := 2;
   constant CFG_ISETSZ : integer := 4;
   constant CFG_ILINE : integer := 8;
-  constant CFG_IREPL : integer := 2;
+  constant CFG_IREPL : integer := 0;
   constant CFG_ILOCK : integer := 0;
   constant CFG_ILRAMEN : integer := 0;
   constant CFG_ILRAMADDR: integer := 16#8E#;
@@ -50,7 +50,7 @@ package config is
   constant CFG_DSETS : integer := 2;
   constant CFG_DSETSZ : integer := 4;
   constant CFG_DLINE : integer := 8;
-  constant CFG_DREPL : integer := 2;
+  constant CFG_DREPL : integer := 0;
   constant CFG_DLOCK : integer := 0;
   constant CFG_DSNOOP : integer := 0 + 1*2 + 4*1;
   constant CFG_DFIXED : integer := 16#0#;
