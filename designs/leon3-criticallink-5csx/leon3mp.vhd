@@ -831,7 +831,11 @@ begin
   ddr3if0: entity work.ddr3if
     generic map (
       hindex => 5,
-      haddr => 16#400#, hmask => 16#F00#
+      haddr => 16#400#, hmask => 16#F00#,
+      -- ahb2avla does not work properly with
+      -- read bursts if the response is segmented up into more than a single
+      -- rdata_valid assertions.
+      burstlen => 2
     ) port map (
       pll_ref_clk => CLK2DDR,
       global_reset_n => sys_rst_n,

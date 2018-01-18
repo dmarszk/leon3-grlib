@@ -34,7 +34,7 @@ int main(void)
   for(i = 0; i < 10; ++i)
   {
     printf("Hello World %d\n", i);
-    delay_loop(5000);
+    delay_loop(50000);
   }
   return 0;
 }

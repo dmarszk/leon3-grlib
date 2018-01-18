@@ -8,7 +8,7 @@ Criticallink 5CSX-42A board synthesizable with Quartus II 16.1
 
 Design contains:
   * LEON3 running at 50 MHz
-  * 256 GiB DDR3 running at 300 MHz using Altera  memory controller IP
+  * 256 GiB DDR3 running at 300 MHz using Altera UniPHY memory controller IP
   * FPGA2HPS bridge allowing the LEON3 system to access the hard processor
     address space.
   * HPS2FPGA bridge allowing the hard processor system to access the LEON3
@@ -22,11 +22,11 @@ https://www.altera.com/en_US/pdfs/literature/hb/cyclone-v/cv_5v4.pdf
 Important notes
 ---------------
 
-* The HPS part of the system requires ARM-processor to be booted. If
+* The HPS (Hard Processing System) part of the system requires ARM-processor to be booted. If
   the HPS system is not booted, the bridges will not work.
 
-* This template was designed with using the Linux image delivered
-  with the board in mind.
+* This project was designed having in mind a Linux image delivered
+  with the board.
 
 * The JTAG debug link requires a system clock frequency several times
   higher than the JTAG clock to function properly. To reduce the
@@ -38,16 +38,6 @@ Important notes
   Avaiable options for clock freq are 6M, 16M and 24M where 24M is
   the default value. If you unplug the USB Blaster II cable the value
   will be reset to 24M.
-
----This might be irrelevant for the current design---
-* Note that there is an issue with Quartus II 14.1 running on Ubuntu 14.04.
-  It is a library issue that causes the automatic tcl scipts for pin
-  assignments to fail. To bypass this issue, comment out the field QSF_NEXT
-  in the Makefile and POST_MODULE_SCRIPT_FILE in qsf_append.qsf. Then run
-  the implementation in the Quartus II gui by running "make quartus-launch".
-  Run the "Analysis & Synthesis" step in Quartus, then run the pin assignment
-  tcl scipts for the HPS and the DDR3 manually before running the full
-  implementation.
 
 Design details
 --------------
@@ -96,6 +86,8 @@ HPS-FPGA control signals:
   To release the CPU reset - write value 0x2 to the control register.
 
 	Example: peekpoke -b 0xFF706010 w.l 0x0 0x2
+
+	leon-loader can be used on the HPS side (see Booting Hello World on LEON from HPS)
 
 HPS-FPGA bridge:
   The access to the LEON peripherals from HPS is done through AXI2AHB
@@ -173,10 +165,13 @@ It causes loader to reset LEON bus, put CPU into reset,
 load the software through shared memory and release CPU reset.
 
 
-Known bugs, TODO
+Known bugs, and TODO
 ----------------
-Sometimes LEON stops either immediately or couple of seconds after deasserting the reset.
-It might be an indication of a timing or a race condition problem in the design.
+There is a bug within ahb2avl bridge, used to bridge LEON to the DDR3 UniPHY controller.
+It does not properly handle long burst transfers where the slave can introduce a gap into the
+responses. It can cause a cache line corruption and an undefined behavior.
+The mitigation for that is reducing burst length on DDR interface to 2 AVL words.
+The recommended burst size is to match the cache line size (8 AVL words).
 
 While H2F GPO pins can trigger interrupt on LEON side using GRGPIO functionality.
 F2H GPI pins are not capable of triggering interrupt on HPS side.

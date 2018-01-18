@@ -21,6 +21,7 @@
 library ieee;
 use ieee.std_logic_1164.all;
 library grlib;
+use grlib.stdlib.log2;
 use grlib.amba.all;
 use grlib.devices.all;
 library gaisler;
@@ -31,7 +32,7 @@ entity ddr3if is
     hindex: integer;
     haddr: integer := 16#400#;
     hmask: integer := 16#000#;
-    burstlen: integer := 4
+    burstlen: integer := 8
     );
   port (
     pll_ref_clk: in std_ulogic;
@@ -95,7 +96,7 @@ architecture rtl of ddr3if is
 			avl_be                    : in    std_logic_vector(3 downto 0)  := (others => 'X'); -- byteenable
 			avl_read_req              : in    std_logic                     := 'X';             -- read
 			avl_write_req             : in    std_logic                     := 'X';             -- write
-			avl_size                  : in    std_logic_vector(2 downto 0)  := (others => 'X'); -- burstcount
+			avl_size                  : in    std_logic_vector(log2(burstlen) downto 0)  := (others => 'X'); -- burstcount
 			local_init_done           : out   std_logic;                                        -- local_init_done
 			local_cal_success         : out   std_logic;                                        -- local_cal_success
 			local_cal_fail            : out   std_logic;                                        -- local_cal_fail
@@ -171,7 +172,7 @@ begin
       avl_be => avlsi.be(3 downto 0),
       avl_read_req => avlsi.read_req,
       avl_write_req => avlsi.write_req,
-      avl_size => avlsi.size(2 downto 0),
+      avl_size => avlsi.size(log2(burstlen) downto 0),
       local_init_done => local_init_done,
       local_cal_success => local_cal_success,
       local_cal_fail => local_cal_fail,

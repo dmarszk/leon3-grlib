@@ -60,7 +60,7 @@ entity ddr3ctrl1 is
     avl_be                    : in    std_logic_vector(3 downto 0)  := (others => 'X'); -- byteenable
     avl_read_req              : in    std_logic                      := 'X';             -- read
     avl_write_req             : in    std_logic                      := 'X';             -- write
-    avl_size                  : in    std_logic_vector(2 downto 0)   := (others => 'X'); -- burstcount
+    avl_size                  : in    std_logic_vector(1 downto 0)   := (others => 'X'); -- burstcount
     local_init_done           : out   std_logic;                                         -- local_init_done
     local_cal_success         : out   std_logic;                                         -- local_cal_success
     local_cal_fail            : out   std_logic;                                         -- local_cal_fail
@@ -197,8 +197,8 @@ begin
     end load_srec;
 
     constant avldbits: integer := 32;
-    variable outqueue: std_logic_vector(0 to 4*avldbits-1) := (others => 'X');
-    variable outqueue_valid: std_logic_vector(0 to 3) := (others => '0');
+    variable outqueue: std_logic_vector(0 to 8*avldbits-1) := (others => 'X');
+    variable outqueue_valid: std_logic_vector(0 to 7) := (others => '0');
     variable ai,p: integer;
     variable wbleft: integer := 0;
   begin
@@ -207,9 +207,9 @@ begin
       wait until rising_edge(lafi_clk);
       avl_rdata_valid <= outqueue_valid(0);
       avl_rdata <= outqueue(0 to avldbits-1);
-      outqueue(0 to 3*avldbits-1) := outqueue(avldbits to 4*avldbits-1);
-      outqueue(3*avldbits to 4*avldbits-1) := (others => 'X');
-      outqueue_valid := outqueue_valid(1 to 3) & '0';
+      outqueue(0 to 7*avldbits-1) := outqueue(avldbits to 8*avldbits-1);
+      outqueue(7*avldbits to 8*avldbits-1) := (others => 'X');
+      outqueue_valid := outqueue_valid(1 to 7) & '0';
       if avl_burstbegin='1' then wbleft:=0; end if;
       if lafi_rst_n='0' then
         outqueue_valid := (others => '0');
