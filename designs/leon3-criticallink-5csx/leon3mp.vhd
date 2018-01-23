@@ -210,7 +210,7 @@ entity leon3mp is
       HSMC1_RX8         : out std_logic := '0';
       HSMC1_RX9         : out std_logic := '0';
       HSMC1_RX10        : in std_logic;
-      HSMC1_RX11        : out std_logic := '0';
+      HSMC1_RX11        : in std_logic;
       HSMC1_RX12        : out std_logic := '0';
       HSMC1_RX13        : out std_logic := '0';
       HSMC1_RX14        : out std_logic := '0';
@@ -312,8 +312,8 @@ architecture rtl of leon3mp is
   signal del_ce: std_logic;
   signal del_bwe, del_bwa, del_bwb: std_logic_vector(1 downto 0);
 
-  signal dbguarti, uart1i: uart_in_type;
-  signal dbguarto, uart1o: uart_out_type;
+  signal dbguarti, uart1i, uart2i: uart_in_type;
+  signal dbguarto, uart1o, uart2o: uart_out_type;
 
   signal vcc, gnd: std_ulogic;
 
@@ -588,6 +588,9 @@ begin
   HSMC1_RX10_N <= uart1o.txd;
   uart1i.rxd <= HSMC1_RX10;
 
+  HSMC1_RX11_N <= uart2o.txd;
+  uart2i.rxd <= HSMC1_RX11;
+
   sw_fpga(1) <= loaner_in(37);
   sw_fpga(2) <= loaner_in(40);
   sw_fpga(3) <= loaner_in(41);
@@ -700,13 +703,22 @@ begin
   -- APB Slaves
   -----------------------------------------------------------------------------
 
-  ua0 : if CFG_UART1_ENABLE /= 0 generate
+  ua1 : if CFG_UART1_ENABLE /= 0 generate
   uart1 : apbuart
       generic map (pindex   => 1, paddr => 1, pirq => 2, console => dbguart,
                    fifosize => CFG_UART1_FIFO)
       port map (rstn, clkm, apbi, apbo(1), uart1i, uart1o);
     uart1i.ctsn   <= '0';
     uart1i.extclk <= '0';
+  end generate;
+
+  ua2 : if CFG_UART2_ENABLE /= 0 generate
+  uart2 : apbuart
+      generic map (pindex   => 9, paddr => 9, pirq => 3,
+                   fifosize => CFG_UART2_FIFO)
+      port map (rstn, clkm, apbi, apbo(9), uart2i, uart2o);
+    uart2i.ctsn   <= '0';
+    uart2i.extclk <= '0';
   end generate;
 
   irqctrl : if CFG_IRQ3_ENABLE /= 0 generate

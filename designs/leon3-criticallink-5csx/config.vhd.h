@@ -127,6 +127,10 @@
   constant CFG_UART1_ENABLE : integer := CONFIG_UART1_ENABLE;
   constant CFG_UART1_FIFO   : integer := CFG_UA1_FIFO;
 
+-- UART 2
+  constant CFG_UART2_ENABLE : integer := CONFIG_UART2_ENABLE;
+  constant CFG_UART2_FIFO   : integer := CFG_UA2_FIFO;
+
 -- LEON3 interrupt controller
   constant CFG_IRQ3_ENABLE  : integer := CONFIG_IRQ3_ENABLE;
   constant CFG_IRQ3_NSEC    : integer := CONFIG_IRQ3_NSEC;

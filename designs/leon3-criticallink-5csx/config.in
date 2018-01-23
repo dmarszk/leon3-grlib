@@ -63,6 +63,7 @@ comment 'Peripherals             '
   mainmenu_option next_comment
   comment 'UARTs, timers and irq control         '
     source lib/gaisler/uart/uart1.in
+    source lib/gaisler/uart/uart2.in
     source lib/gaisler/irqmp/irqmp.in
     source lib/gaisler/misc/gptimer.in
     source lib/gaisler/misc/grgpio.in
@@ -70,7 +71,7 @@ comment 'Peripherals             '
 
 
 #  mainmenu_option next_comment
-#  comment 'Keybord and VGA interface'
+#  comment 'Keyboard and VGA interface'
 #    source lib/gaisler/misc/ps2vga.in
 #  endmenu
 

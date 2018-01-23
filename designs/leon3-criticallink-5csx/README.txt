@@ -35,7 +35,7 @@ Important notes
 
   jtagconfig --setparam <cable number> JtagClock <clock freq>
 
-  Avaiable options for clock freq are 6M, 16M and 24M where 24M is
+  Available options for clock freq are 6M, 16M and 24M where 24M is
   the default value. If you unplug the USB Blaster II cable the value
   will be reset to 24M.
 
@@ -54,6 +54,11 @@ Push button assignments:
   SW3 - DSU break
   SW2 - Reset LEON system
   SW1 - unused
+
+Additional ports (for debugging purposes only):
+	HSMC1_TX15 (out)  - CLK2DDR (100MHz) divided by 2^26. Approx. 1.5Hz.
+	HSMC1_TX14_N (in) - see below
+	HSMC1_TX14 (out)  - logical AND of HSMC1_TX14_N input with signal seen on HSMC1_TX15
 
 GRGPIO port mapping:
 	GRGPIO IP-core in the design has 16 pins, out of which 8 are
@@ -75,6 +80,22 @@ GRGPIO port mapping:
 	GPIO[13] - H2F GPI[13] (output only)
 	GPIO[14] - H2F GPI[14] (output only)
 	GPIO[15] - H2F GPI[15] (output only)
+
+CAN port mapping:
+Routing is done through HPS->FPGA loan IO, the IP-Core
+is Gaisler wrapper for OpenCores CAN (documentation to grip.pdf)
+	CAN_OC RX - HPS CAN2 RX
+	CAN_OC TX - HPS CAN2 TX
+
+Debug UART port mapping:
+	AHB Debug UART TX - HSMC1_RX6_N
+	AHB Debug UART RX - HSMC1_RX7_N
+
+Peripheral UART ports mapping:
+	UART1 TX (console stdout) - HSMC1_RX10_N
+	UART1 RX (console stdin ) - HSMC1_RX10
+	UART2 TX - HSMC1_RX11_N
+	UART2 RX - HSMC1_RX11
 
 HPS-FPGA control signals:
   LEON CPU starts in reset mode, controlled by HPS.
@@ -121,7 +142,8 @@ FPGA-HPS bridge:
   changed by the user.
 
 Interrupts:
-  2 - APB UART
+  2 - APB UART1 (console)
+	3 - APB UART2
   7 - AHB status register (disabled in the default config)
   8 - Timer
   13 - CAN_OC

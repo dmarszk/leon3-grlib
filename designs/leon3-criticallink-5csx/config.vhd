@@ -123,6 +123,9 @@ package config is
 -- UART 1
   constant CFG_UART1_ENABLE : integer := 1;
   constant CFG_UART1_FIFO : integer := 4;
+-- UART 2
+  constant CFG_UART2_ENABLE : integer := 1;
+  constant CFG_UART2_FIFO : integer := 4;
 -- LEON3 interrupt controller
   constant CFG_IRQ3_ENABLE : integer := 1;
   constant CFG_IRQ3_NSEC : integer := 0;
