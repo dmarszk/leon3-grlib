@@ -26,7 +26,7 @@ package config is
   constant CFG_LEON3 : integer := 1;
   constant CFG_NCPU : integer := (1);
   constant CFG_NWIN : integer := (8);
-  constant CFG_V8 : integer := 2 + 4*0;
+  constant CFG_V8 : integer := 16#32# + 4*0;
   constant CFG_MAC : integer := 0;
   constant CFG_BP : integer := 1;
   constant CFG_SVT : integer := 1;
@@ -58,14 +58,14 @@ package config is
   constant CFG_DLRAMADDR: integer := 16#8F#;
   constant CFG_DLRAMSZ : integer := 1;
   constant CFG_MMUEN : integer := 1;
-  constant CFG_ITLBNUM : integer := 16;
-  constant CFG_DTLBNUM : integer := 16;
+  constant CFG_ITLBNUM : integer := 8;
+  constant CFG_DTLBNUM : integer := 8;
   constant CFG_TLB_TYPE : integer := 0 + 1*2;
-  constant CFG_TLB_REP : integer := 1;
+  constant CFG_TLB_REP : integer := 0;
   constant CFG_MMU_PAGE : integer := 0;
   constant CFG_DSU : integer := 1;
   constant CFG_ITBSZ : integer := 4 + 64*0;
-  constant CFG_ATBSZ : integer := 1;
+  constant CFG_ATBSZ : integer := 2;
   constant CFG_AHBPF : integer := 0;
   constant CFG_LEON3FT_EN : integer := 0;
   constant CFG_IUFT_EN : integer := 0;
@@ -80,7 +80,7 @@ package config is
   constant CFG_STAT_CNT : integer := (4);
   constant CFG_STAT_NMAX : integer := (0);
   constant CFG_STAT_DSUEN : integer := 0;
-  constant CFG_NP_ASI : integer := 1;
+  constant CFG_NP_ASI : integer := 0;
   constant CFG_WRPSR : integer := 0;
   constant CFG_ALTWIN : integer := 0;
   constant CFG_REX : integer := 0;
@@ -136,8 +136,8 @@ package config is
   constant CFG_GPT_TW : integer := (32);
   constant CFG_GPT_IRQ : integer := (8);
   constant CFG_GPT_SEPIRQ : integer := 1;
-  constant CFG_GPT_WDOGEN : integer := 0;
-  constant CFG_GPT_WDOG : integer := 16#0#;
+  constant CFG_GPT_WDOGEN : integer := 1;
+  constant CFG_GPT_WDOG : integer := 16#FFFF#;
 -- GPIO port
   constant CFG_GRGPIO_ENABLE : integer := 1;
   constant CFG_GRGPIO_IMASK : integer := 16#0000#;
