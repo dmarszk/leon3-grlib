@@ -40,6 +40,7 @@ https://www.altera.com/en_US/pdfs/literature/hb/cyclone-v/cv_5v4.pdf
 ## LEDs
 3 LEDs (LED1-LED3) and 3 push-buttons (SW1-SW3) are connected to HPS
 and exposed to the FPGA through IO Loaner interface.
+
 LED assignments:
 * LED3 (red)    - CPU in error mode
 * LED2 (yellow) - DSU active
@@ -59,6 +60,7 @@ Additional ports (for debugging purposes only):
 
 ## GRGPIO
 GRGPIO IP-core in the design has 16 pins, out of which 8 are mapped to the FPGA pins. Remaining 8 are connected to HPS-FPGA interface. Pins 0-11 of the pins are capable of generating an interrupt.
+
 GRGPIO port mapping:
 * GPIO[0] - HSMC_TX0
 * GPIO[1] - HSMC_TX0_N
@@ -79,6 +81,7 @@ GRGPIO port mapping:
 
 ## CAN interface
 CAN pins routing is done through HPS->FPGA loan IO, the IP-Core is Gaisler wrapper for OpenCores CAN (documentation in grip.pdf)
+
 CAN port mapping:
 * CAN_OC RX - HPS CAN2 RX
 * CAN_OC TX - HPS CAN2 TX
@@ -108,7 +111,7 @@ HPS-FPGA control signals:
   ```
   peekpoke -b 0xFF706010 w.l 0x0 0x2
   ```
-  In general, leon-loader application should be used on the HPS side (see Booting Hello World on LEON from HPS).
+  In general, leon-loader application should be used on the HPS side (see [Booting Hello World on LEON from HPS](#booting-hello-world-on-leon-from-hps)).
 
 ## LEON Memory Map
 LEON AHB Memory Map:
@@ -116,11 +119,11 @@ LEON AHB Memory Map:
 * 0x20000000 (Simulation only) - Test report module, size 1 Mbyte
 * 0x40000000 - Avalon-MM memory controller, size 256 Mbyte
 * 0x80000000 - AHB-APB bridge, size 1 Mbyte
-** 0x80000100 - Generic UART, size 256 byte
-** 0x80000200 - Multi-processor Interrupt Ctrl., size 256 byte
-** 0x80000300 - Modular Timer Unit, size 256 byte
-** 0x80000700 - AHB Debug UART, size 256 byte
-** 0x80000800 - General Purpose I/O port, size 256 byte
+  * 0x80000100 - Generic UART, size 256 byte
+  * 0x80000200 - Multi-processor Interrupt Ctrl., size 256 byte
+  * 0x80000300 - Modular Timer Unit, size 256 byte
+  * 0x80000700 - AHB Debug UART, size 256 byte
+  * 0x80000800 - General Purpose I/O port, size 256 byte
 * 0x90000000 - LEON3 Debug Support Unit, size 256 Mbyte
 * 0xc0000000 - AMBA AHB/AXI Bridge, size 256 Mbyte
 * 0xfffc0000 - OC CAN AHB interface, size 256 byte
@@ -129,16 +132,15 @@ LEON AHB Memory Map:
 The access to the LEON peripherals from HPS is done through AXI2AHB
 bridge mapped in HPS under 0xC0000000 - 0xFBFFFFFF address space,
 with dynamic address translation of 4 memory regions:
-- 0xC0000000 -> 0x40000000 (RAM)
-- 0xD0000000 -> 0x50000000 (RAM)
-- 0xE0000000 -> 0x80000000 (APB peripherals)
-- 0xF0000000 -> 0x90000000 (DSU)
+* 0xC0000000 -> 0x40000000 (RAM)
+* 0xD0000000 -> 0x50000000 (RAM)
+* 0xE0000000 -> 0x80000000 (APB peripherals)
+* 0xF0000000 -> 0x90000000 (DSU)
 The LEON bus reset has to be programatically released before issuing
 any reads on HPS-FPGA bridge. Otherwise the system will freeze.
 
 ## FPGA-HPS bridge
-  The access to the HPS peripherals is given an offset in the AHB2AXI
-  bridge (example: 0xCF700000 translates to 0xFF700000). This can be configured.
+The access to the HPS peripherals is given an offset in the AHB2AXI bridge (example: 0xCF700000 translates to 0xFF700000). This can be modified in the design config.
 
 ## LEON Interrupts
 * 2 - APB UART1 (console)
@@ -163,6 +165,7 @@ on the board is set to "00", otherwise the programming will fail.
 
 # HPS software loader
 The project includes an application allowing to boot software on LEON from linux running on HPS.
+
 Compile it using:
 ```
 arm-linux-gnueabihf-gcc leon-loader.c -o leon-loader
@@ -175,10 +178,11 @@ Compile Hello World using:
 ```
 sparc-gaisler-elf-clang -g -Wall -msoft-float hello_world.c -o hello_world.exe
 ```
-If FPU has been enabled in the project config, use
+If FPU has been enabled in the project config, use:
 ```
-(LEON with FPU) sparc-gaisler-elf-clang -g -Wall hello_world.c -o hello_world.exe
+sparc-gaisler-elf-clang -g -Wall hello_world.c -o hello_world.exe
 ```
+Note: This will *not* work in the default project configuration.
 
 For use with Bare-C Cross Compiler System v1, replace "sparc-gaisler-elf-clang" with "sparc-elf-gcc"
 
@@ -188,7 +192,7 @@ leon-loader -f leon_software.exe -br
 ```
 It causes loader to reset LEON bus, put CPU into reset, load the software through shared memory and release CPU reset.
 
-Alternatively, grmon can be used (see section Debugging)
+Alternatively, grmon can be used (see [Program Load](#program-load))
 
 
 # Known bugs, and TODO
