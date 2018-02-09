@@ -182,7 +182,7 @@ If FPU has been enabled in the project config, use:
 ```
 sparc-gaisler-elf-clang -g -Wall hello_world.c -o hello_world.exe
 ```
-Note: This will *not* work in the default project configuration.
+Note: This will **_not_** work with the default project configuration (FPU is disabled by default for licensing reasons).
 
 For use with Bare-C Cross Compiler System v1, replace "sparc-gaisler-elf-clang" with "sparc-elf-gcc"
 
@@ -210,7 +210,7 @@ This can be improved by hooking F2H GPI lines to dedicated HPS_F2H IRQ lane.
 # Debugging
 Debugging can be done over the debug UART interface (JTAG currently does not work properly).
 CPU reset has to be released (HPS2FPGA GPO[1] set to high) before running software on the core.
-Recommended way is to run ```leon-loader -b``` on HPS system.
+Recommended way is to run ```leon-loader -b``` on HPS system **_before_** initializing grmon connection.
 
 ## Debugger connection
 (replace /dev/ttyUSB2 with the port assigned to the USB-UART converter connected to the LEON DSU port)
