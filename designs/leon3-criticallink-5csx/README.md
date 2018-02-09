@@ -143,12 +143,12 @@ FPGA-HPS bridge:
 
 Interrupts:
   2 - APB UART1 (console)
-	3 - APB UART2
+  3 - APB UART2
   7 - AHB status register (disabled in the default config)
   8 - Timer
   13 - CAN_OC
 
-	GRGPIO can generate signal on any of the IRQ line.
+GRGPIO can generate signal on any of the LEON IRQ lines.
 
 Simulation
 -----------
