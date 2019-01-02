@@ -148,7 +148,7 @@ The access to the HPS peripherals is given an offset in the AHB2AXI bridge (exam
 * 7 - AHB status register (disabled in the default config)
 * 8 - Timer
 * 13 - CAN_OC
-GRGPIO can generate signal on any of the LEON IRQ lines.
+* GRGPIO can generate signal on any of the LEON IRQ lines.
 
 # Simulation
 The standard GRLIB flow with "make vsim" and then "vsim testbench" can be used to
