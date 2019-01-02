@@ -362,9 +362,20 @@ static void load_section(int32_t fd, Elf32_Shdr* sh, uint32_t hps_addr, Memory_M
       exit(-2);
     }
     va_buf = (char*)va_base + offset;
-    printf(" - loading 0x%08X bytes to VA buf 0x%08X (VA base 0x%08X) [%s]\n",
-      sh->sh_size, (uint32_t)va_buf, (uint32_t)va_base, section_name);
-    read_section_to_buf(fd, sh, va_buf);
+    switch (sh->sh_type)
+    {
+      case SHT_PROGBITS:
+        printf(" - loading 0x%08X bytes to VA buf 0x%08X (VA base 0x%08X) [%s]\n",
+          sh->sh_size, (uint32_t)va_buf, (uint32_t)va_base, section_name);
+        read_section_to_buf(fd, sh, va_buf);
+        break;
+      case SHT_NOBITS:
+        printf(" - Skipping load for NOBITS section\n");
+        break;
+      default:
+        printf(" - Don't know how to handle section type 0x%X\n", sh->sh_type);
+        break;
+    }
     if (munmap(va_base, mmap_size) == -1)
     {
       printf(" Can't unmap memory from user space.\n");
@@ -422,20 +433,25 @@ static void load_sections_to_memory(int32_t fd, Elf32_Ehdr eh, Elf32_Shdr sh_tab
   free(sh_str);
 }
 
-void print_usage(void)
+void print_usage(const char* exename)
 {
-  printf("LEON Cyclone V loader\n");
-  printf("Usage: leon-loader [-f <ELF-file>] [-dbr]\n");
+  printf("LEON software loader for Cyclone V\n");
+  printf("Usage: %s [-f <ELF-file>] [-dbr]\n", exename);
   printf(" -d dry run (does not write anything to memory)\n");
   printf(" -b boot LEON CPU - puts LEON CPU in reset and releases\n"
-         "                    it after software load)\n");
+         "                    it after software load\n");
   printf(" -r reset LEON bus - resets LEON bus before software load,\n"
-  "                            power cycling all peripherals and controllers)\n");
+  "                            power cycling all peripherals and controllers\n");
 }
 
 void parse_arguments(int argc, char** argv)
 {
   int c;
+  if (argc == 1)
+  {
+    print_usage(argv[0]);
+    exit(-1);
+  }
   while ((c = getopt (argc, argv, "dbrf:")) != -1)
   {
     switch (c)
@@ -458,19 +474,19 @@ void parse_arguments(int argc, char** argv)
         else if (isprint (optopt))
         {
           printf("Unknown argument '%c'\n", optopt);
-          print_usage();
+          print_usage(argv[0]);
           exit(-1);
         }
         else
         {
           printf("Unknown option character `\\x%x'.\n",
                  optopt);
-          print_usage();
+          print_usage(argv[0]);
           exit(-1);
         }
       default:
         printf("Argument parsing error.\n");
-        print_usage();
+        print_usage(argv[0]);
         exit(-1);
       }
   }
