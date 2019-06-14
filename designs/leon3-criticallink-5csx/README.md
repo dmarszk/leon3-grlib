@@ -35,6 +35,11 @@ https://www.altera.com/en_US/pdfs/literature/hb/cyclone-v/cv_5v4.pdf
   the default value. If you unplug the USB Blaster II cable the value
   will be reset to 24M.
 
+# Recommended hardware
+- Criticallink MitySOM-5CSx Development Kit with 5CSX-42A SOM
+- TDRB-HTG (M) HSMC P0033 adapter
+- Minimum 2 of USB-UART 3.3V bridges
+
 # Design details
 
 ## LEDs
@@ -195,17 +200,19 @@ It causes loader to reset LEON bus, put CPU into reset, load the software throug
 Alternatively, grmon can be used (see [Program Load](#program-load))
 
 
-# Known bugs, and TODO
-There is a bug within ahb2avl bridge, used to bridge LEON to the DDR3 UniPHY controller.
+# Known issues and future evolution
+- There is a bug within ahb2avl bridge, used to bridge LEON to the DDR3 UniPHY controller.
 It does not properly handle long burst transfers where the slave can introduce a gap into the
 responses. It can cause a cache line corruption and an undefined behavior.
-The mitigation for that is reducing burst length on DDR interface to 2 AVL words.
+This has been mitigated by reducing the burst size on the DDR interface to 2 AVL words.
 Otherwise, the recommended burst size is to match the cache line size (8 AVL words).
 
-While H2F GPO pins can trigger interrupt on LEON side using GRGPIO functionality.
-F2H GPI pins are not capable of triggering interrupt on HPS side.
+- While H2F GPO pins can trigger interrupt on LEON side using GRGPIO functionality,
+the F2H GPI pins are not capable of triggering interrupt on HPS side.
 This can be improved by hooking F2H GPI lines to dedicated HPS_F2H IRQ lane.
 
+- System images of RTEMS do not work out of the box (i.e. no UART output is produced) when executed directly from system reset (using only `leon-loader`).
+A workaround for that involves: connecting to the target using a debugger (e.g. `grmon`), which initialises the peripheral interfaces (i.e. clocks, etc), then loading the image through `leon-loader -bf` and either detaching the debugger, or resuming the execution, if the use of debugger is desired.
 
 # Debugging
 Debugging can be done over the debug UART interface (JTAG currently does not work properly).
