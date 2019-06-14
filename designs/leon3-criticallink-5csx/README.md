@@ -5,15 +5,21 @@ Note: This design is EXPERIMENTAL.
 This LEON3 design is tailored for the Altera Cyclone V SX SoC on the
 Criticallink 5CSX-42A board synthesizable with Quartus II 16.1
 
-Design contains:
+Design utilises:
   * LEON3 running at 50 MHz
   * 256 GiB DDR3 running at 300 MHz using Altera UniPHY memory controller IP
   * FPGA2HPS bridge allowing the LEON3 system to access the hard processor
     address space.
   * HPS2FPGA bridge allowing the hard processor system to access the LEON3
     address space.
-  * JTAG debug link connected to on-board USB blaster II (currently not working properly)
-  * UART debug link
+  * JTAG debug port connected to on-board USB blaster II (currently not working properly)
+  * UART debug port
+  * 2 peripheral UART ports (1 for system console, 1 extra)
+  * CAN controller connected to the dev board's second CAN interface
+  * GPIO controller
+  * Routing to the dev board's LEDs and Push Buttons
+  * HPS-FPGA H2F GPIO routing for ease of controlling the SoC from HPS
+  
 
 Information about the hard processor system can be found in:
 https://www.altera.com/en_US/pdfs/literature/hb/cyclone-v/cv_5v4.pdf
@@ -201,6 +207,8 @@ Alternatively, grmon can be used (see [Program Load](#program-load))
 
 
 # Known issues and future evolution
+- JTAG interface to the DSU does not work - UART connection is required.
+
 - There is a bug within ahb2avl bridge, used to bridge LEON to the DDR3 UniPHY controller.
 It does not properly handle long burst transfers where the slave can introduce a gap into the
 responses. It can cause a cache line corruption and an undefined behavior.
@@ -213,6 +221,7 @@ This can be improved by hooking F2H GPI lines to dedicated HPS_F2H IRQ lane.
 
 - System images of RTEMS do not work out of the box (i.e. no UART output is produced) when executed directly from system reset (using only `leon-loader`).
 A workaround for that involves: connecting to the target using a debugger (e.g. `grmon`), which initialises the peripheral interfaces (i.e. clocks, etc), then loading the image through `leon-loader -bf` and either detaching the debugger, or resuming the execution, if the use of debugger is desired.
+Further tackling this issue could involve performing all the proper initialization in the ROM code.
 
 # Debugging
 Debugging can be done over the debug UART interface (JTAG currently does not work properly).
