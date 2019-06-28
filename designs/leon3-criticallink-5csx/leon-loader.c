@@ -547,7 +547,7 @@ int main(int argc, char** argv)
     fd = open(input_file, O_RDONLY|O_SYNC);
     if(fd < 0)
     {
-      printf("Error %d Unable to open %s\n", fd, argv[1]);
+      printf("Error %d Unable to open %s\n", fd, input_file);
       exit(-2);
     }
     /* ELF header : at start of file */
